@@ -12,13 +12,13 @@ Most "AI ad audit" tools read your CSV and tell you "CPA is high." The judgments
 
 ## Quick start
 
-1. **[Download `index.html`](index.html)** (or clone this repo) and open it in any browser — that's the entire install.
+1. **[Download `index.html`](https://raw.githubusercontent.com/riz1k9/pulse-audit/main/index.html)** (right-click → Save Link As), or clone this repo, and open it in any browser — that's the entire install.
 2. Pick the platforms you advertise on (this only tailors the export walkthroughs — you can skip it).
 3. Export a CSV from your ads manager (guides are built into the tool) and drop it in.
 4. Set your target CPA (lead gen) or target ROAS (ecommerce).
 5. Read the action queue: worst first, each row says **what to do, why, and shows the math**.
 
-Or try it instantly with the built-in sample accounts (buttons in the tool), or the CSVs in [`samples/`](samples/).
+Or try it instantly with the built-in sample accounts (the two buttons in the tool). The same files are in [`samples/`](samples/) if you'd rather practise the drag-and-drop flow or see the expected column layout.
 
 ## What you get
 
@@ -42,6 +42,7 @@ Or try it instantly with the built-in sample accounts (buttons in the tool), or 
 | Min conversions to scale | 3 | Don't scale on luck |
 | Frequency cap | 3.5 | Above → creative-fatigue flag |
 | Low-CTR ratio | 0.5× median | Below half your account's median CTR → weak-creative flag |
+| Min impressions | 1,000 | Impressions needed before any CTR judgment counts |
 | Trend alarm | 25% | Recent-half CPA up / CTR down by this → deterioration flag |
 | Scale step | 20% | Suggested budget increase per round |
 

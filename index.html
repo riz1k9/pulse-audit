@@ -1,10 +1,12 @@
+<!doctype html>
+<html lang="en">
 <title>PULSE//AUDIT — Ad Account Console</title>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   :root{
     --bg:#070a14; --panel:#10152b; --panel-2:#0c1122; --edge:#232c4e; --edge-hot:#00e5ff;
-    --ink:#e6ebfa; --muted:#8b93b0; --dim:#5d6788;
+    --ink:#e6ebfa; --muted:#9aa3c0; --dim:#828cad;
     --cyan:#00e5ff; --magenta:#ff2ec4; --violet:#a78bfa;
     --v-scale:#00a29b; --v-watch:#ad8c25; --v-pause:#7568d8; --v-kill:#cc2f74;
     --v-keep:#55628a; --v-data:#3a4262;
@@ -22,7 +24,7 @@
   /* ---------- command bar ---------- */
   header{border-bottom:1px solid var(--edge);padding:18px 20px;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
     max-width:1180px;margin:0 auto}
-  .logo{font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:.08em}
+  .logo{font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:.08em;margin:0}
   .logo .sl{color:var(--magenta)}
   .logo .au{color:var(--cyan)}
   .tagline{color:var(--muted);font-size:12.5px}
@@ -102,7 +104,7 @@
   .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
   .tile{background:var(--panel);border:1px solid var(--edge);border-radius:6px;padding:14px 16px}
   .tile .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-  .tile .v{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .tile .v{font-family:var(--mono);font-size:clamp(18px,4.4vw,26px);font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
   .tile .d{font-size:11.5px;color:var(--dim);margin-top:2px;font-family:var(--mono)}
   .tile.hero{border-color:var(--magenta);box-shadow:0 0 18px rgba(255,46,196,.12) inset}
   .tile.hero .v{color:var(--magenta)}
@@ -140,7 +142,8 @@
   td{padding:9px 10px;border-bottom:1px solid rgba(35,44,78,.5);vertical-align:top;font-family:var(--mono)}
   td .ent{color:var(--ink)} td .cmp{color:var(--dim);font-size:11px;margin-top:1px}
   .vchip{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;
-    padding:3px 9px;border-radius:3px;color:#fff}
+    padding:3px 9px;border-radius:3px;color:#080c18}
+  .vchip[data-v="KEEP"],.vchip[data-v="LOW DATA"],.vchip[data-v="PAUSE"]{color:#fff}
   .conf{font-size:10px;color:var(--dim);letter-spacing:.08em;margin-top:3px}
   td.why{font-family:var(--sans);color:var(--muted);font-size:12.5px;max-width:340px}
   td.why .act{color:var(--ink);font-weight:600}
@@ -158,6 +161,7 @@
 
   @media (max-width:640px){
     .barrow{grid-template-columns:110px 1fr 70px}
+    td.why{max-width:none}
     header{padding:14px 16px}
     #readout{margin-left:0}
   }
@@ -168,7 +172,7 @@
 </style>
 
 <header>
-  <div class="logo"><span class="sl">PULSE</span>//<span class="au">AUDIT</span></div>
+  <h1 class="logo"><span class="sl">PULSE</span>//<span class="au">AUDIT</span></h1>
   <div class="navsw"><a class="cur" href="./">AUDIT</a> · <a href="https://riz1k9.github.io/pulse-mmm/" rel="noopener">MMM</a></div>
   <div class="tagline">offline ad-account diagnostics — deterministic rules, no AI, your data never leaves this page</div>
   <div id="readout">standby</div>
@@ -213,35 +217,35 @@
         <div class="g"><label>Primary KPI</label>
           <div class="modew"><button id="mode-cpa" class="on">CPA</button><button id="mode-roas">ROAS</button></div>
           <div class="exp">CPA if you buy leads/installs, ROAS if you sell online (needs a revenue column in the export).</div></div>
-        <div class="g"><label>Target CPA</label><input type="number" id="cfg-targetCPA" min="0" step="1">
+        <div class="g"><label for="cfg-targetCPA">Target CPA</label><input type="number" id="cfg-targetCPA" min="0" step="1">
           <div class="exp">The most you can pay per conversion and still make money.</div></div>
-        <div class="g"><label>Target ROAS</label><input type="number" id="cfg-targetROAS" min="0" step="0.1">
+        <div class="g"><label for="cfg-targetROAS">Target ROAS</label><input type="number" id="cfg-targetROAS" min="0" step="0.1">
           <div class="exp">Revenue ÷ spend you need to break even + margin.</div></div>
-        <div class="g"><label>Currency symbol</label><input type="text" id="cfg-cur" maxlength="4"></div>
+        <div class="g"><label for="cfg-cur">Currency symbol</label><input type="text" id="cfg-cur" maxlength="4"></div>
       </div>
       <div class="notice" id="kpinote"></div>
       <details class="rules">
         <summary>▸ Advanced: rule thresholds (sensible defaults — you don't have to touch these)</summary>
         <div class="goalgrid">
-          <div class="g"><label>Judgment floor (spend)</label><input type="number" id="cfg-minSpend" min="0" step="1">
+          <div class="g"><label for="cfg-minSpend">Judgment floor (spend)</label><input type="number" id="cfg-minSpend" min="0" step="1">
             <div class="exp">Below this spend, no verdict — flagged LOW DATA instead.</div></div>
-          <div class="g"><label>Kill multiple</label><input type="number" id="cfg-killMult" min="1" step="0.1">
+          <div class="g"><label for="cfg-killMult">Kill multiple</label><input type="number" id="cfg-killMult" min="1" step="0.1">
             <div class="exp">Zero conversions after this × target CPA of spend → KILL.</div></div>
-          <div class="g"><label>CPA tolerance</label><input type="number" id="cfg-tol" min="1" step="0.05">
+          <div class="g"><label for="cfg-tol">CPA tolerance</label><input type="number" id="cfg-tol" min="1" step="0.05">
             <div class="exp">Ceiling = target × this. Above ceiling → PAUSE; between target and ceiling → WATCH.</div></div>
-          <div class="g"><label>Scale threshold</label><input type="number" id="cfg-scaleThr" min="0.1" max="1" step="0.05">
+          <div class="g"><label for="cfg-scaleThr">Scale threshold</label><input type="number" id="cfg-scaleThr" min="0.1" max="1" step="0.05">
             <div class="exp">CPA ≤ this × target (with volume) → SCALE.</div></div>
-          <div class="g"><label>Min conv. to scale</label><input type="number" id="cfg-minConvScale" min="1" step="1">
+          <div class="g"><label for="cfg-minConvScale">Min conv. to scale</label><input type="number" id="cfg-minConvScale" min="1" step="1">
             <div class="exp">Don't scale on luck — require this many conversions first.</div></div>
-          <div class="g"><label>Frequency cap</label><input type="number" id="cfg-freqCap" min="1" step="0.1">
+          <div class="g"><label for="cfg-freqCap">Frequency cap</label><input type="number" id="cfg-freqCap" min="1" step="0.1">
             <div class="exp">Above this average frequency → creative-fatigue flag (Meta/TikTok exports).</div></div>
-          <div class="g"><label>Low-CTR ratio</label><input type="number" id="cfg-ctrRatio" min="0.1" max="1" step="0.05">
+          <div class="g"><label for="cfg-ctrRatio">Low-CTR ratio</label><input type="number" id="cfg-ctrRatio" min="0.1" max="1" step="0.05">
             <div class="exp">CTR below this × your account's median → weak-creative flag.</div></div>
-          <div class="g"><label>Min impressions</label><input type="number" id="cfg-minImpr" min="0" step="100">
+          <div class="g"><label for="cfg-minImpr">Min impressions</label><input type="number" id="cfg-minImpr" min="0" step="100">
             <div class="exp">Needed before CTR judgments count.</div></div>
-          <div class="g"><label>Scale step %</label><input type="number" id="cfg-scaleStep" min="5" max="100" step="5">
+          <div class="g"><label for="cfg-scaleStep">Scale step %</label><input type="number" id="cfg-scaleStep" min="5" max="100" step="5">
             <div class="exp">Suggested budget increase per scaling round (20% keeps learning stable).</div></div>
-          <div class="g"><label>Trend alarm %</label><input type="number" id="cfg-trendPct" min="5" max="100" step="5">
+          <div class="g"><label for="cfg-trendPct">Trend alarm %</label><input type="number" id="cfg-trendPct" min="5" max="100" step="5">
             <div class="exp">Recent-half CPA up (or CTR down) by this % → deterioration flag. Needs a date column.</div></div>
         </div>
         <div class="feedrow"><button class="btn ghost" id="resetcfg">Reset all settings to defaults</button></div>
@@ -254,6 +258,7 @@
     <div class="sec-head"><span class="sec-num">03</span><span class="sec-title">Diagnosis</span></div>
     <div id="diag-empty" class="panel"><div class="empty">— awaiting data feed — load a sample above to see what this looks like —</div></div>
     <div id="diag" style="display:none">
+      <div id="targetwarn"></div>
       <div class="tiles" id="tiles"></div>
       <div class="panel chartwrap">
         <div class="maphead">Spend by verdict</div>
@@ -296,9 +301,16 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 /* ============ config ============ */
 const DEFAULTS={mode:"cpa",targetCPA:40,targetROAS:2,cur:"$",minSpend:40,killMult:2,tol:1.3,
   scaleThr:0.85,minConvScale:3,freqCap:3.5,ctrRatio:0.5,minImpr:1000,scaleStep:20,trendPct:25,platforms:[]};
+const MINS={targetCPA:0.01,targetROAS:0.01,tol:1,scaleThr:0.1,killMult:0.1,minConvScale:1,freqCap:0.1,ctrRatio:0.01,minImpr:0,scaleStep:1,trendPct:1};
+function clampCfg(c){for(const k in MINS)if(!(c[k]>=MINS[k]))c[k]=DEFAULTS[k];return c}
 let cfg=loadCfg();
-function loadCfg(){try{return{...DEFAULTS,...JSON.parse(localStorage.getItem("pulseaudit.cfg")||"{}")}}catch(e){return{...DEFAULTS}}}
-function saveCfg(){try{localStorage.setItem("pulseaudit.cfg",JSON.stringify(cfg))}catch(e){}}
+function loadCfg(){try{
+    const s=JSON.parse(localStorage.getItem("pulseaudit.cfg")||"{}");
+    const c=clampCfg({...DEFAULTS,...s});
+    c._targetSet=("targetCPA" in s)||("targetROAS" in s);   // did the user ever set a real target?
+    return c;
+  }catch(e){return{...DEFAULTS}}}
+function saveCfg(){try{const{_targetSet,...c}=cfg;localStorage.setItem("pulseaudit.cfg",JSON.stringify(c))}catch(e){}}
 
 const VERDICTS={
   KILL:{hex:"#cc2f74",rank:0},
@@ -330,14 +342,31 @@ function renderPlatforms(){
 renderPlatforms();
 
 /* ============ csv parsing ============ */
+function badType(buf,name){
+  const b=[...buf.slice(0,4)];
+  const is=(...sig)=>sig.every((v,i)=>b[i]===v);
+  if(is(0x50,0x4B,0x03,0x04))return /\.numbers$/i.test(name)
+    ? "That's a Numbers file, not a CSV — in Numbers choose File → Export To → CSV, then drop the .csv."
+    : "That's an Excel workbook, not a CSV — in Excel choose File → Save As → CSV UTF-8, then drop the .csv.";
+  if(is(0xD0,0xCF,0x11,0xE0))return "That's an old-format Excel file (.xls), not a CSV — open it and Save As → CSV UTF-8.";
+  if(is(0x25,0x50,0x44,0x46))return "That's a PDF, not a CSV — export the report as CSV from your ads manager instead.";
+  return null;
+}
 async function readAny(f){
   const buf=new Uint8Array(await f.arrayBuffer());
+  const bad=badType(buf,f.name);
+  if(bad)return{err:bad};
   let enc="utf-8";
   if(buf[0]===0xFF&&buf[1]===0xFE)enc="utf-16le";
   else if(buf[0]===0xFE&&buf[1]===0xFF)enc="utf-16be";
   else{let nul=0;for(let i=0;i<Math.min(buf.length,2000);i++)if(buf[i]===0)nul++;
     if(nul>50)enc="utf-16le";}
-  return new TextDecoder(enc).decode(buf);
+  return{text:new TextDecoder(enc).decode(buf)};
+}
+async function handleFile(f){
+  const r=await readAny(f);
+  if(r.err){clearResults("awaiting data feed");msg(r.err,"err");return;}
+  ingest(r.text,f.name);
 }
 function parseCSV(text){
   text=text.replace(/^﻿/,"");
@@ -361,7 +390,23 @@ function parseCSV(text){
     }
   }
   row.push(cell); if(row.some(c=>c.trim()!==""))rows.push(row);
-  return {rows,delim};
+  return {rows,delim,dec:sniffDecimal(rows)};
+}
+// Decide "1,234.56" vs "1.234,56" from the digits themselves. Guessing from the delimiter
+// scales every number by 100x or 1000x on a mismatched file, silently.
+function sniffDecimal(rows){
+  let comma=0,dot=0;
+  for(const r of rows.slice(0,400))for(let s of r){
+    s=String(s).trim(); if(!s||s.length>24||!/\d/.test(s))continue;
+    if(/^\d{4}-\d{1,2}-\d{1,2}/.test(s))continue;
+    const c=s.lastIndexOf(","),d=s.lastIndexOf(".");
+    if(c>=0&&d>=0){ if(c>d)comma+=2; else dot+=2; continue; }
+    const sep=c>=0?c:d; if(sep<0)continue;
+    const tail=s.length-sep-1;
+    if(tail===3)continue;                                 // ambiguous: could be thousands
+    if((tail>=1&&tail<=2)||tail>=4){ if(c>=0)comma++; else dot++; }
+  }
+  return comma>dot?"comma":dot>comma?"dot":null;
 }
 const norm=h=>h.toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
 const SYN={
@@ -373,8 +418,12 @@ const SYN={
   frequency:["frequency","avg impr freq per user","avg frequency"],
   date:["day","date","reporting starts","date start","week","month starts","month","by day"]
 };
+// Summary/total rows carry the whole report's spend. Counting one as an ad doubles every
+// headline number, so drop them — anchored so a real campaign named "Total Gym" survives.
+const SUMMARY_RE=/^(grand\s+)?totals?\b|^summar(y|ies)\b|^overall\b|^account\s+total\b|^all\s+campaigns\b|^[-\u2013\u2014]{1,2}$/i;
 const NAME_PRIORITY=["search term","keyword","search keyword","ad name","creative name","asset","product title","item id","ad set name","adset name","ad group","ad group name","asset group","campaign name","campaign"];
 const CAMP_SYN=["campaign name","campaign"];
+const ADSET_SYN=["ad set name","adset name","ad set","ad group name","ad group","adgroup","asset group"];
 
 function findHeaderRow(rows){
   const all=Object.values(SYN).flat().concat(NAME_PRIORITY);
@@ -384,22 +433,38 @@ function findHeaderRow(rows){
   }
   return 0;
 }
+const VALUEISH=/\b(value|val|revenue|amount|sales|worth)\b/;
 function guessMapping(headers){
   const m={}; const nh=headers.map(norm);
-  const pick=list=>{ for(const s of list){ const i=nh.findIndex(h=>h===s); if(i>=0)return i; }
-    for(const s of list){ const i=nh.findIndex(h=>h.startsWith(s)||h.includes(s)); if(i>=0)return i; } return -1; };
-  for(const[role,list]of Object.entries(SYN)) m[role]=pick(list);
+  const pick=(list,veto)=>{ 
+    for(const s of list){ const i=nh.findIndex((h,j)=>h===s&&!(veto&&veto(h,j))); if(i>=0)return i; }
+    for(const s of list){ const i=nh.findIndex((h,j)=>(h.startsWith(s)||h.includes(s))&&!(veto&&veto(h,j))); if(i>=0)return i; }
+    return -1; };
+  for(const[role,list]of Object.entries(SYN))
+    if(role!=="conversions")m[role]=pick(list);
+  // Resolve conversions LAST, vetoing money-ish headers. Otherwise the bare "conv" synonym
+  // prefix-matches "Conv. value" and a revenue column becomes the conversion COUNT — which
+  // inverts verdicts, badging a money-losing ad SCALE.
+  m.conversions=pick(SYN.conversions,(h,i)=>VALUEISH.test(h)||i===m.revenue);
   m.name=pick(NAME_PRIORITY);
   m.campaign=pick(CAMP_SYN);
+  m.adset=pick(ADSET_SYN);
   if(m.campaign===m.name)m.campaign=-1;
+  if(m.adset===m.name||m.adset===m.campaign)m.adset=-1;
   return m;
 }
 function parseNum(s){
   if(s==null)return 0; s=String(s).trim();
   if(!s||s==="--"||s==="—")return 0;
+  const neg=/^\(.*\)$/.test(s);                        // accounting negative: (1,234)
   if(state.commaDec)s=s.replace(/\./g,"").replace(/,/g,".");
-  const v=parseFloat(s.replace(/[^0-9.\-]/g,""));
-  return isFinite(v)?v:0;
+  else s=s.replace(/,(?=\d{3}\b)/g,"");                 // strip only true thousands separators
+  const m=s.match(/-?\d*\.?\d+(?:[eE][-+]?\d+)?/);      // keep scientific notation intact
+  if(!m){state.badCells=(state.badCells||0)+1;return 0;}
+  let v=parseFloat(m[0]);
+  if(!isFinite(v))return 0;
+  if(!/%/.test(s))v*=/\d\s*k\b/i.test(s)?1e3:/\d\s*m\b/i.test(s)?1e6:/\d\s*b\b/i.test(s)?1e9:1;
+  return neg?-Math.abs(v):v;
 }
 
 /* ============ state ============ */
@@ -411,10 +476,11 @@ function buildEntities(){
   const{rows,mapping:m}=state; const ents=new Map();
   for(const r of rows){
     const name=(m.name>=0?r[m.name]||"":"").trim();
-    if(!name||/^total\b/i.test(name)||/^all campaigns/i.test(name))continue;
+    if(!name||SUMMARY_RE.test(name))continue;
     const camp=m.campaign>=0?(r[m.campaign]||"").trim():"";
-    const key=name+"||"+camp;
-    if(!ents.has(key))ents.set(key,{name,camp,spend:0,impr:0,clicks:0,conv:0,rev:0,freqW:0,freqImp:0,series:[]});
+    const aset=m.adset>=0?(r[m.adset]||"").trim():"";
+    const key=name+"||"+camp+"||"+aset;
+    if(!ents.has(key))ents.set(key,{name,camp,aset,spend:0,impr:0,clicks:0,conv:0,rev:0,freqW:0,freqImp:0,series:[]});
     const e=ents.get(key);
     const spend=m.spend>=0?parseNum(r[m.spend]):0, impr=m.impressions>=0?parseNum(r[m.impressions]):0,
       clicks=m.clicks>=0?parseNum(r[m.clicks]):0, conv=m.conversions>=0?parseNum(r[m.conversions]):0,
@@ -425,6 +491,7 @@ function buildEntities(){
   }
   const list=[...ents.values()];
   for(const e of list){
+    e.conv=Math.round(e.conv*100)/100; e.rev=Math.round(e.rev*100)/100;
     e.freq=e.freqImp>0?e.freqW/e.freqImp:null;
     e.cpa=e.conv>0?e.spend/e.conv:null;
     e.roas=e.spend>0?e.rev/e.spend:null;
@@ -438,6 +505,7 @@ function accountStats(list){
   const t={spend:0,impr:0,clicks:0,conv:0,rev:0};
   for(const e of list){t.spend+=e.spend;t.impr+=e.impr;t.clicks+=e.clicks;t.conv+=e.conv;t.rev+=e.rev;}
   const ctrs=list.filter(e=>e.impr>=Math.max(500,cfg.minImpr/2)&&e.ctr!=null).map(e=>e.ctr).sort((a,b)=>a-b);
+  t.conv=Math.round(t.conv*100)/100; t.rev=Math.round(t.rev*100)/100;
   t.medCTR=ctrs.length?ctrs[Math.floor(ctrs.length/2)]:null;
   t.cpa=t.conv>0?t.spend/t.conv:null; t.roas=t.spend>0?t.rev/t.spend:null;
   t.ctr=t.impr>0?t.clicks/t.impr:null;
@@ -447,16 +515,18 @@ function accountStats(list){
 /* ============ the judgment engine ============ */
 function money(v){return cfg.cur+(Math.abs(v)>=1000?v.toLocaleString(undefined,{maximumFractionDigits:0}):v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}))}
 function pct(v){return(v*100).toFixed(v*100<10?2:1)+"%"}
+function num(v){return v.toLocaleString(undefined,{maximumFractionDigits:2})}
 
 function judge(e,acct){
   const M=[],R=[]; let verdict="KEEP",action="";
   const roasMode=cfg.mode==="roas";
   const hasConv=state.mapping.conversions>=0;
   const hasRev=state.mapping.revenue>=0;
-  const conf=e.conv>=10||e.clicks>=500?"HIGH":e.conv>=3||e.clicks>=100?"MED":"LOW";
+  // Confidence must rest on the same evidence the verdict does: conversion volume.
+  let conf=e.conv>=10?"HIGH":e.conv>=3?"MED":"LOW";
 
   if(e.spend<cfg.minSpend){
-    verdict="LOW DATA";
+    verdict="LOW DATA"; conf="LOW";
     R.push(`Only ${money(e.spend)} spent — below the ${money(cfg.minSpend)} judgment floor.`);
     M.push(`spend ${money(e.spend)} < judgment floor ${money(cfg.minSpend)} → no verdict`);
     action="Let it spend or cut it manually — not enough signal either way.";
@@ -464,7 +534,7 @@ function judge(e,acct){
   }
 
   if(!roasMode&&!hasConv){
-    verdict="WATCH";
+    verdict="WATCH"; conf=e.clicks>=500?"HIGH":e.clicks>=100?"MED":"LOW";
     R.push("This export has no conversions column, so efficiency can't be judged — only creative signals below.");
     M.push("conversions column: not mapped → CPA rules skipped");
     action="Re-export with a conversions/results column for full verdicts.";
@@ -478,15 +548,15 @@ function judge(e,acct){
       M.push(`CPA = spend ÷ conversions = ${money(e.spend)} ÷ ${e.conv} = ${money(e.cpa)}`);
       M.push(`ceiling = target ${money(target)} × tolerance ${cfg.tol} = ${money(ceiling)}`);
       if(e.cpa>ceiling){
-        if(e.conv>=cfg.minConvScale){verdict="PAUSE";R.push(`CPA ${money(e.cpa)} is ${Math.round(e.cpa/target*100)}% of target with real volume (${e.conv} conv).`);action=`Pause, or rebuild targeting/landing page — every conversion overpays by ${money(e.cpa-target)}.`;}
-        else{verdict="WATCH";R.push(`CPA ${money(e.cpa)} is above ceiling but only ${e.conv} conversions — could be noise.`);action="Give it one more spend cycle, then apply the pause rule.";}
+        if(e.conv>=cfg.minConvScale){verdict="PAUSE";R.push(`CPA ${money(e.cpa)} is ${Math.round(e.cpa/target*100)}% of target on real volume (${e.conv} conversion${e.conv===1?"":"s"}).`);action=`Pause, or rebuild targeting/landing page — every conversion overpays by ${money(e.cpa-target)}.`;}
+        else{verdict="WATCH";R.push(`CPA ${money(e.cpa)} is above ceiling but on only ${e.conv} conversion${e.conv===1?"":"s"} — could be noise.`);action="Give it one more spend cycle, then apply the pause rule.";}
       }else if(e.cpa>target){
         verdict="WATCH";R.push(`CPA ${money(e.cpa)} sits in the tolerance band (${money(target)}–${money(ceiling)}).`);
         action="Trim worst placements/hours or test a cheaper hook to pull CPA under target.";
       }else if(e.cpa<=target*cfg.scaleThr&&e.conv>=cfg.minConvScale){
         verdict="SCALE";
         M.push(`scale line = target × ${cfg.scaleThr} = ${money(target*cfg.scaleThr)}; conversions ${e.conv} ≥ ${cfg.minConvScale}`);
-        R.push(`CPA ${money(e.cpa)} beats target by ${Math.round((1-e.cpa/target)*100)}% on ${e.conv} conversions.`);
+        R.push(`CPA ${money(e.cpa)} beats target by ${Math.round((1-e.cpa/target)*100)}% on ${e.conv} conversion${e.conv===1?"":"s"}.`);
         action=`Raise budget +${cfg.scaleStep}% (≈ +${money(e.spend*cfg.scaleStep/100)}); re-check after the learning reset settles.`;
       }else{
         R.push(`CPA ${money(e.cpa)} is under target ${money(target)} — earning its budget.`);
@@ -495,7 +565,12 @@ function judge(e,acct){
     }
   }else{
     const target=cfg.targetROAS, floor=target/cfg.tol;
-    if(!hasRev){verdict="WATCH";R.push("ROAS mode needs a revenue / conversion-value column — none is mapped.");action="Map a revenue column in section 01, or switch to CPA mode.";return fin();}
+    if(!hasRev){verdict="WATCH";conf=e.clicks>=500?"HIGH":e.clicks>=100?"MED":"LOW";R.push("ROAS mode needs a revenue / conversion-value column — none is mapped.");action="Map a revenue column in section 01, or switch to CPA mode.";return fin();}
+    // With no purchase-count column e.conv is always 0, which would make every PAUSE and SCALE
+    // gate unreachable and print "thin volume (0)" on an ad with 20,000 clicks.
+    const volOK = hasConv ? e.conv>=cfg.minConvScale : e.spend>=cfg.minSpend*cfg.killMult;
+    const volTxt = hasConv ? `${e.conv} purchase${e.conv===1?"":"s"}` : `${money(e.spend)} spent`;
+    if(!hasConv)M.push("no conversions column mapped → volume confidence taken from spend vs the kill line");
     M.push(`ROAS = revenue ÷ spend = ${money(e.rev)} ÷ ${money(e.spend)} = ${(e.roas||0).toFixed(2)}`);
     M.push(`floor = target ${target} ÷ tolerance ${cfg.tol} = ${floor.toFixed(2)}`);
     if(e.rev===0){
@@ -504,15 +579,15 @@ function judge(e,acct){
       if(e.spend>=killAt){verdict="KILL";R.push(`${money(e.spend)} spent with zero revenue.`);action="Turn it off today.";}
       else{verdict="PAUSE";R.push(`${money(e.spend)} spent, zero revenue.`);action="Pause; relaunch only with a change.";}
     }else if(e.roas<floor){
-      if(e.conv>=cfg.minConvScale){verdict="PAUSE";R.push(`ROAS ${e.roas.toFixed(2)} is below the ${floor.toFixed(2)} floor with ${e.conv} purchases — losing money at margin.`);action=`Pause or cut ${money(Math.max(0,e.spend-e.rev/target))} of its spend.`;}
-      else{verdict="WATCH";R.push(`ROAS ${e.roas.toFixed(2)} below floor but thin volume (${e.conv}).`);action="One more cycle, then pause rule applies.";}
+      if(volOK){verdict="PAUSE";R.push(`ROAS ${e.roas.toFixed(2)} is below the ${floor.toFixed(2)} floor on ${volTxt} — losing money at margin.`);action=`Pause or cut ${money(Math.max(0,e.spend-e.rev/target))} of its spend.`;}
+      else{verdict="WATCH";R.push(`ROAS ${e.roas.toFixed(2)} is below floor, but on only ${volTxt} — could be noise.`);action="One more cycle, then the pause rule applies.";}
     }else if(e.roas<target){
       verdict="WATCH";R.push(`ROAS ${e.roas.toFixed(2)} between floor ${floor.toFixed(2)} and target ${target}.`);
       action="Push AOV (bundles) or cut weakest products/placements to clear target.";
-    }else if(e.roas>=target/cfg.scaleThr&&e.conv>=cfg.minConvScale){
+    }else if(e.roas>=target/cfg.scaleThr&&volOK){
       verdict="SCALE";
-      M.push(`scale line = target ÷ ${cfg.scaleThr} = ${(target/cfg.scaleThr).toFixed(2)}; purchases ${e.conv} ≥ ${cfg.minConvScale}`);
-      R.push(`ROAS ${e.roas.toFixed(2)} clears target by ${Math.round((e.roas/target-1)*100)}% on ${e.conv} purchases.`);
+      M.push(`scale line = target ÷ ${cfg.scaleThr} = ${(target/cfg.scaleThr).toFixed(2)}; volume check passed on ${volTxt}`);
+      R.push(`ROAS ${e.roas.toFixed(2)} clears target by ${Math.round((e.roas/target-1)*100)}% on ${volTxt}.`);
       action=`Raise budget +${cfg.scaleStep}% (≈ +${money(e.spend*cfg.scaleStep/100)}).`;
     }else{R.push(`ROAS ${e.roas.toFixed(2)} ≥ target ${target} — profitable.`);action="Leave it alone.";}
   }
@@ -534,7 +609,10 @@ function judge(e,acct){
   if(tr){
     if(tr.cpaUp!=null){M.push(`CPA first half ${money(tr.cpa1)} → second half ${money(tr.cpa2)} (+${Math.round(tr.cpaUp*100)}%)`);
       R.push(`CPA is deteriorating: ${money(tr.cpa1)} → ${money(tr.cpa2)} between halves of the date range.`);
-      if(verdict==="SCALE"||verdict==="KEEP"){verdict="WATCH";action="Hold budget flat until the CPA slide stops.";}}
+      if(verdict==="SCALE"||verdict==="KEEP"){
+        if(verdict==="SCALE")M.push(`scale withheld: CPA trend deteriorating +${Math.round(tr.cpaUp*100)}% — the scale line was cleared on period totals only`);
+        verdict="WATCH";
+        action=("Hold budget flat until the CPA slide stops. "+action).trim();}}
     if(tr.ctrDown!=null){M.push(`CTR first half ${pct(tr.ctr1)} → ${pct(tr.ctr2)} (−${Math.round(tr.ctrDown*100)}%)`);
       R.push("CTR is decaying over the period — classic creative burnout curve.");
       if(!/creative|hook/i.test(action))action+=" Rotate in fresh creative.";}
@@ -559,9 +637,9 @@ function trend(e){
 
 /* ============ run ============ */
 function runAudit(){
-  if(!state.rows)return;
+  if(!state.rows){clearResults("awaiting data feed");return;}
   state.entities=buildEntities();
-  if(!state.entities.length){msg("No usable rows found — check the Entity name column mapping below.","err");return;}
+  if(!state.entities.length){clearResults("no usable rows");msg("No usable rows found — check the Entity name column mapping below.","err");return;}
   state.acct=accountStats(state.entities);
   state.recs=state.entities.map(e=>judge(e,state.acct)).sort((a,b)=>a.rank-b.rank||b.e.spend-a.e.spend);
   const counts={};for(const r of state.recs)counts[r.verdict]=1;
@@ -578,7 +656,9 @@ function renderNotices(){
   const hasConv=state.mapping.conversions>=0, hasRev=state.mapping.revenue>=0;
   const feedN=$("#feednotice"), kpiN=$("#kpinote");
   let f="";
-  if(!hasConv)f="⚠ No conversions column detected — efficiency verdicts are limited to creative signals. If your export has one, map it below.";
+  if(!hasConv)f=cfg.mode==="roas"
+    ? "⚠ No purchase-count column detected — ROAS still works, but confidence comes from spend volume instead. Map one below for sharper calls."
+    : "⚠ No conversions column detected — efficiency verdicts are limited to creative signals. If your export has one, map it below.";
   feedN.textContent=f; feedN.style.display=f?"block":"none";
   let k="";
   if(cfg.mode==="roas"&&!hasRev)k="⚠ ROAS mode needs a revenue / conversion-value column and this export has none — switch to CPA, or re-export with conversion value included.";
@@ -598,13 +678,19 @@ function renderTiles(){
   const kpi=cfg.mode==="roas"
     ?{k:"Blended ROAS",v:a.roas!=null?a.roas.toFixed(2):"—",d:`target ${cfg.targetROAS}`,cls:a.roas!=null&&a.roas>=cfg.targetROAS?"good":"bad"}
     :{k:"Blended CPA",v:a.cpa!=null?money(a.cpa):"—",d:`target ${money(cfg.targetCPA)}`,cls:a.cpa!=null&&a.cpa<=cfg.targetCPA?"good":a.cpa!=null?"bad":""};
+  // A default target the user never confirmed silently decides every verdict below, so say so
+  // where the numbers are actually read rather than only in the settings panel.
+  const warn=!cfg._targetSet
+    ?`<div class="notice" style="display:block;margin:0 0 12px">⚠ These verdicts are running on the default target of ${cfg.mode==="roas"?cfg.targetROAS+" ROAS":money(cfg.targetCPA)+" CPA"} — a placeholder, not your number. <a href="#sec-goals">Set your target</a> and everything re-runs instantly.</div>`
+    :"";
   const tiles=[
-    {k:"Total spend",v:money(a.spend),d:`${a.conv.toLocaleString()} conversions`},
+    {k:"Total spend",v:money(a.spend),d:`${num(a.conv)} conversions`},
     {k:kpi.k,v:`<span class="${kpi.cls}">${kpi.v}</span>`,d:kpi.d},
-    {k:"Wasted spend identified",v:money(waste),d:"recoverable from KILL + PAUSE",hero:waste>0},
+    {k:"Wasted spend identified",v:money(waste),d:"overspend above target on KILL + PAUSE",hero:waste>0},
     {k:"Account CTR",v:a.ctr!=null?pct(a.ctr):"—",d:a.medCTR?`median entity ${pct(a.medCTR)}`:""},
     {k:"Scale candidates",v:String(scaleN),d:scaleN?`+${cfg.scaleStep}% budget each`:"none cleared the bar"},
   ];
+  $("#targetwarn").innerHTML=warn;
   $("#tiles").innerHTML=tiles.map(t=>`<div class="tile${t.hero?" hero":""}"><div class="k">${t.k}</div><div class="v">${t.v}</div><div class="d">${t.d||""}</div></div>`).join("");
 }
 function renderCharts(){
@@ -661,8 +747,8 @@ function renderQueue(){
     <th>Why / action</th></tr></thead><tbody>`+
     recs.map(r=>{const e=r.e,V=VERDICTS[r.verdict];
       const kpiCell=cfg.mode==="roas"?(e.roas!=null?e.roas.toFixed(2):"—"):(e.cpa!=null?money(e.cpa):"—");
-      return`<tr><td><span class="vchip" style="background:${V.hex}">${r.verdict}</span><div class="conf">CONF ${r.conf}</div></td>
-      <td><div class="ent">${esc(e.name)}</div>${e.camp?`<div class="cmp">${esc(e.camp)}</div>`:""}</td>
+      return`<tr><td><span class="vchip" data-v="${r.verdict}" style="background:${V.hex}">${r.verdict}</span><div class="conf">CONF ${r.conf}</div></td>
+      <td><div class="ent">${esc(e.name)}</div>${e.aset?`<div class="cmp">${esc(e.aset)}</div>`:""}${e.camp?`<div class="cmp">${esc(e.camp)}</div>`:""}</td>
       <td class="num">${money(e.spend)}</td><td class="num">${kpiCell}</td>
       <td class="num">${e.conv}</td><td class="num">${e.ctr!=null?pct(e.ctr):"—"}</td>
       <td class="num">${e.freq!=null?e.freq.toFixed(1):"—"}</td>
@@ -670,10 +756,15 @@ function renderQueue(){
         <details><summary>▸ show the math</summary><pre>${r.math.map(esc).join("\n")}</pre></details></td></tr>`;}).join("")+"</tbody>";
   $("#capwrap").innerHTML=capped?`<div class="capnote">Showing ${TABLE_CAP} of ${totalN} — <button class="btn ghost" id="showall">show all</button></div>`:"";
   if(capped)$("#showall").onclick=()=>{state.showAll=true;renderQueue();};
-  $$("#qtable th[data-k]").forEach(th=>th.onclick=()=>{
-    const k=th.dataset.k;
-    if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=1;}
-    renderQueue();});
+  $$("#qtable th[data-k]").forEach(th=>{
+    const k=th.dataset.k, cur=state.sortKey===k;
+    th.tabIndex=0; th.setAttribute("role","button");
+    th.setAttribute("aria-sort",cur?(state.sortDir===1?"ascending":"descending"):"none");
+    if(cur)th.textContent=th.textContent.replace(/[ ↑↓]+$/,"")+(state.sortDir===1?" ↑":" ↓");
+    const go=()=>{ if(state.sortKey===k)state.sortDir*=-1; else{state.sortKey=k;state.sortDir=1;} renderQueue(); };
+    th.onclick=go;
+    th.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}};
+  });
   renderRealloc();
 }
 function renderRealloc(){
@@ -682,26 +773,42 @@ function renderRealloc(){
   const pool=losers.reduce((s,r)=>s+r.e.spend,0);
   if(!pool||!winners.length){$("#realloc").innerHTML=pool?`<div class="maphead" style="margin-top:8px">Reallocation</div>${money(pool)} is freed by KILL/PAUSE but nothing currently clears the scale bar — bank it or fund new tests.`:"";return;}
   const convSum=winners.reduce((s,r)=>s+r.e.conv,0)||1;
-  $("#realloc").innerHTML=`<div class="maphead" style="margin-top:8px">Reallocation — ${money(pool)} freed from ${losers.length} loser(s)</div>`+
-    winners.map(r=>{const share=pool*r.e.conv/convSum;const capped=Math.min(share,r.e.spend*cfg.scaleStep/100);
-      return`<div class="rrow"><span>${esc(r.e.name)}</span><span><b>+${money(capped)}</b> now (cap ${cfg.scaleStep}%/round) · headroom ${money(share)}</span></div>`;}).join("");
+  let sumCapped=0;
+  const rows=winners.map(r=>{const share=pool*r.e.conv/convSum;const capped=Math.min(share,r.e.spend*cfg.scaleStep/100);
+      sumCapped+=capped;
+      return`<div class="rrow"><span>${esc(r.e.name)}</span><span><b>+${money(capped)}</b> now (cap ${cfg.scaleStep}%/round) · share of pool ${money(share)}</span></div>`;}).join("");
+  const left=pool-sumCapped;
+  $("#realloc").innerHTML=`<div class="maphead" style="margin-top:8px">Reallocation — ${money(pool)} of budget released by ${losers.length} loser(s)</div>`+rows+
+    (left>0.5?`<div class="rrow" style="border:0"><span>Unallocated this round</span><span>${money(left)} — bank it or fund new tests</span></div>`:"");
 }
 
 /* ============ mapping UI ============ */
-const ROLES=[["name","Entity name"],["campaign","Campaign"],["spend","Spend"],["impressions","Impressions"],
+const ROLES=[["name","Entity name"],["campaign","Campaign"],["adset","Ad set / Ad group"],["spend","Spend"],["impressions","Impressions"],
   ["clicks","Clicks"],["conversions","Conversions"],["revenue","Revenue / conv. value"],["frequency","Frequency"],["date","Date"]];
 function renderMapping(){
   $("#mapwrap").style.display="block";
-  $("#mapgrid").innerHTML=ROLES.map(([role,label])=>`<div class="maprole"><label>${label}</label>
-    <select data-role="${role}"><option value="-1">—</option>${state.headers.map((h,i)=>
+  $("#mapgrid").innerHTML=ROLES.map(([role,label])=>`<div class="maprole"><label for="map-${role}">${label}</label>
+    <select id="map-${role}" data-role="${role}"><option value="-1">—</option>${state.headers.map((h,i)=>
       `<option value="${i}"${state.mapping[role]===i?" selected":""}>${esc(h)}</option>`).join("")}</select></div>`).join("");
   $$("#mapgrid select").forEach(s=>s.onchange=()=>{state.mapping[s.dataset.role]=+s.value;runAudit();});
 }
 
 /* ============ ingest ============ */
+function clearResults(why){
+  state.entities=null;state.recs=null;state.acct=null;
+  $("#diag").style.display="none";$("#queuepanel").style.display="none";
+  $("#diag-empty").style.display="block";$("#queue-empty").style.display="block";
+  if(why){$("#diag-empty").querySelector(".empty").textContent="— "+why+" —";
+          $("#queue-empty").querySelector(".empty").textContent="— "+why+" —";}
+  $("#readout").textContent="standby";
+}
 function ingest(text,name,delimHint){
-  const{rows,delim}=parseCSV(text);
-  state.commaDec=(delimHint||delim)===";";
+  // Clear first: a failed load must never leave the previous file's verdicts on screen,
+  // where they would be exported under the new filename.
+  clearResults("awaiting data feed");
+  state.rows=null;state.headers=null;state.mapping=null;state.badCells=0;state.summaryDropped=0;
+  const{rows,delim,dec}=parseCSV(text);
+  state.commaDec = dec ? dec==="comma" : (delimHint||delim)===";";
   if(rows.length<2){msg("Couldn't parse that file — is it a CSV export?","err");return;}
   const hi=findHeaderRow(rows);
   state.headers=rows[hi].map(h=>h.trim());
@@ -711,7 +818,10 @@ function ingest(text,name,delimHint){
   state.showAll=false;
   if(state.mapping.spend<0||state.mapping.name<0){
     msg("Loaded, but couldn't auto-detect "+(state.mapping.spend<0?"a spend column":"an entity column")+" — set it below.","err");
-  }else msg(`Parsed ${state.rows.length} rows · ${state.headers.length} columns from ${name}.`,"ok");
+  }else{
+    const sample=(state.rows[0]||[]).find(v=>v&&/\d/.test(v)&&!/^\d{4}-/.test(String(v).trim()));
+    msg(`Parsed ${state.rows.length} rows · ${state.headers.length} columns from ${name}. Numbers read as ${state.commaDec?"1.234,56":"1,234.56"}${sample?` (e.g. "${String(sample).trim()}" → ${parseNum(sample).toLocaleString()})`:""}.`,"ok");
+  }
   renderMapping();
   runAudit();
 }
@@ -719,10 +829,10 @@ function msg(t,cls){const m=$("#parsemsg");m.textContent=t;m.className=cls||"";}
 
 $("#drop").onclick=()=>$("#file").click();
 $("#drop").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("#file").click();}};
-$("#file").onchange=async e=>{const f=e.target.files[0];if(f)ingest(await readAny(f),f.name);e.target.value="";};
+$("#file").onchange=async e=>{const f=e.target.files[0];if(f)await handleFile(f);e.target.value="";};
 ["dragover","dragenter"].forEach(ev=>$("#drop").addEventListener(ev,e=>{e.preventDefault();$("#drop").classList.add("hot")}));
 ["dragleave","drop"].forEach(ev=>$("#drop").addEventListener(ev,e=>{e.preventDefault();$("#drop").classList.remove("hot")}));
-$("#drop").addEventListener("drop",async e=>{const f=e.dataTransfer.files[0];if(f)ingest(await readAny(f),f.name);});
+$("#drop").addEventListener("drop",async e=>{const f=e.dataTransfer.files[0];if(f)await handleFile(f);});
 
 /* ============ goals & rules binding ============ */
 const NUMS=["targetCPA","targetROAS","minSpend","killMult","tol","scaleThr","minConvScale","freqCap","ctrRatio","minImpr","scaleStep","trendPct"];
@@ -732,11 +842,12 @@ function syncInputs(){
   $("#mode-cpa").classList.toggle("on",cfg.mode==="cpa");
   $("#mode-roas").classList.toggle("on",cfg.mode==="roas");
 }
-for(const k of NUMS)$("#cfg-"+k).oninput=e=>{const v=parseFloat(e.target.value);if(isFinite(v)){cfg[k]=v;saveCfg();runAudit();}};
+for(const k of NUMS)$("#cfg-"+k).oninput=e=>{const v=parseFloat(e.target.value);
+  if(isFinite(v)&&(!(k in MINS)||v>=MINS[k])){cfg[k]=v;if(k==="targetCPA"||k==="targetROAS")cfg._targetSet=true;saveCfg();runAudit();}};
 $("#cfg-cur").oninput=e=>{cfg.cur=e.target.value||"$";saveCfg();runAudit();};
 $("#mode-cpa").onclick=()=>{cfg.mode="cpa";saveCfg();syncInputs();runAudit();};
 $("#mode-roas").onclick=()=>{cfg.mode="roas";saveCfg();syncInputs();runAudit();};
-$("#resetcfg").onclick=()=>{const p=cfg.platforms;cfg={...DEFAULTS,platforms:p};saveCfg();syncInputs();renderPlatforms();runAudit();};
+$("#resetcfg").onclick=()=>{const p=cfg.platforms;cfg={...DEFAULTS,platforms:p,_targetSet:false};saveCfg();syncInputs();renderPlatforms();runAudit();};
 syncInputs();
 
 /* ============ export ============ */
@@ -805,6 +916,6 @@ Search keyword,Campaign,Cost,Impr.,Clicks,Conversions,Conv. value
 "womens running shoes sale",Search — Shoes,171.10,6800,395,6,1010.00
 "how to lace running shoes",Search — Content,38.70,4100,170,0,0
 Total: Search,,"1,574.90","76,500","4,160",40,"6,045.00"`;
-$("#loadsample").onclick=()=>ingest(SAMPLE_META,"sample Meta account");
+$("#loadsample").onclick=()=>ingest(SAMPLE_META,"sample Meta account");//
 $("#loadsample2").onclick=()=>ingest(SAMPLE_GOOGLE,"sample Google keywords");
 </script>
