@@ -26,6 +26,9 @@
   .logo .sl{color:var(--magenta)}
   .logo .au{color:var(--cyan)}
   .tagline{color:var(--muted);font-size:12.5px}
+  .navsw{font-family:var(--mono);font-size:11px;letter-spacing:.1em}
+  .navsw a{text-decoration:none;color:var(--dim)}
+  .navsw a.cur{color:var(--cyan)}
   #readout{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
   #readout b{color:var(--cyan);font-weight:600}
   .hintbar{max-width:1180px;margin:16px auto 0;padding:0 20px}
@@ -166,6 +169,7 @@
 
 <header>
   <div class="logo"><span class="sl">PULSE</span>//<span class="au">AUDIT</span></div>
+  <div class="navsw"><a class="cur" href="index.html">AUDIT</a> · <a href="mmm.html">MMM</a></div>
   <div class="tagline">offline ad-account diagnostics — deterministic rules, no AI, your data never leaves this page</div>
   <div id="readout">standby</div>
 </header>

@@ -1,0 +1,705 @@
+<title>PULSE//MMM — Marketing Mix Console</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#070a14; --panel:#10152b; --panel-2:#0c1122; --edge:#232c4e; --edge-hot:#00e5ff;
+    --ink:#e6ebfa; --muted:#8b93b0; --dim:#5d6788;
+    --cyan:#00e5ff; --magenta:#ff2ec4; --violet:#a78bfa;
+    --v-invest:#00a29b; --v-trim:#ad8c25; --v-hold:#55628a; --v-unproven:#3a4262;
+    --s-actual:#00a29b; --s-model:#7568d8;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;
+    background-image:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(0,229,255,.06),transparent),
+      radial-gradient(ellipse 60% 40% at 90% 110%,rgba(255,46,196,.05),transparent);}
+  main{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+  a{color:var(--cyan)}
+  header{border-bottom:1px solid var(--edge);padding:18px 20px;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
+    max-width:1180px;margin:0 auto}
+  .logo{font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:.08em}
+  .logo .sl{color:var(--magenta)}
+  .logo .au{color:var(--cyan)}
+  .navsw{font-family:var(--mono);font-size:11px;letter-spacing:.1em}
+  .navsw a{text-decoration:none;color:var(--dim)}
+  .navsw a.cur{color:var(--cyan)}
+  .tagline{color:var(--muted);font-size:12.5px}
+  #readout{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+  #readout b{color:var(--cyan);font-weight:600}
+  .hintbar{max-width:1180px;margin:16px auto 0;padding:0 20px}
+  .hintbar>div{border:1px solid var(--edge);border-left:3px solid var(--cyan);border-radius:4px;background:var(--panel-2);
+    padding:10px 14px;font-size:12.5px;color:var(--muted)}
+  .hintbar b{color:var(--ink);font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+
+  section{margin-top:34px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+  .sec-num{font-family:var(--mono);font-size:11px;color:var(--magenta);letter-spacing:.15em}
+  .sec-title{font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+  .sec-sub{color:var(--muted);font-size:12.5px}
+  .panel{position:relative;background:var(--panel);border:1px solid var(--edge);border-radius:6px;padding:18px}
+  .panel::before,.panel::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none}
+  .panel::before{top:-1px;left:-1px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan);border-top-left-radius:6px}
+  .panel::after{bottom:-1px;right:-1px;border-bottom:2px solid var(--magenta);border-right:2px solid var(--magenta);border-bottom-right-radius:6px}
+
+  #drop{border:1.5px dashed var(--edge);border-radius:6px;padding:30px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+  #drop:hover,#drop.hot{border-color:var(--cyan);background:rgba(0,229,255,.04)}
+  #drop .big{font-family:var(--mono);letter-spacing:.05em;font-size:15px}
+  #drop .hint{color:var(--muted);font-size:12.5px;margin-top:6px}
+  #file{display:none}
+  .btn{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;background:transparent;
+    color:var(--cyan);border:1px solid var(--cyan);border-radius:4px;padding:8px 14px;cursor:pointer;transition:background .15s,box-shadow .15s}
+  .btn:hover{background:rgba(0,229,255,.1);box-shadow:0 0 12px rgba(0,229,255,.25)}
+  .btn:focus-visible,#drop:focus-visible,select:focus-visible,input:focus-visible,.chip:focus-visible{outline:2px solid var(--magenta);outline-offset:2px}
+  .btn.ghost{color:var(--muted);border-color:var(--edge)}
+  .btn.ghost:hover{color:var(--ink);background:rgba(139,147,176,.08);box-shadow:none}
+  .btn.mag{color:var(--magenta);border-color:var(--magenta)}
+  .btn.mag:hover{background:rgba(255,46,196,.1);box-shadow:0 0 12px rgba(255,46,196,.25)}
+  .feedrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center}
+  #parsemsg{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  #parsemsg.ok{color:var(--v-invest)}
+  #parsemsg.err{color:#cc2f74}
+  .notice{margin-top:10px;border:1px solid var(--v-trim);border-radius:4px;padding:8px 12px;font-size:12.5px;color:var(--v-trim);display:none}
+  .fmt{margin-top:14px;border:1px solid var(--edge);border-radius:4px;background:var(--panel-2);padding:10px 12px}
+  .fmt summary{cursor:pointer;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--ink)}
+  .fmt p{color:var(--muted);font-size:12.5px;margin:8px 0 2px}
+  .fmt code{font-family:var(--mono);font-size:11.5px;color:var(--violet);background:var(--bg);padding:1px 5px;border-radius:3px}
+
+  .maphead{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--violet);margin-bottom:8px}
+  #setup{margin-top:16px;display:none}
+  .setgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+  .g label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .g .exp{font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.35}
+  select,input[type=number],input[type=text]{width:100%;background:var(--panel-2);color:var(--ink);border:1px solid var(--edge);
+    border-radius:4px;padding:7px 8px;font-family:var(--mono);font-size:12.5px}
+  select:hover,input:hover{border-color:var(--dim)}
+  .modew{display:flex;border:1px solid var(--edge);border-radius:4px;overflow:hidden}
+  .modew button{flex:1;background:var(--panel-2);border:0;color:var(--muted);font-family:var(--mono);font-size:12px;
+    letter-spacing:.08em;padding:8px 0;cursor:pointer;text-transform:uppercase}
+  .modew button.on{background:rgba(0,229,255,.12);color:var(--cyan)}
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.06em;background:var(--panel-2);border:1px solid var(--edge);
+    color:var(--muted);border-radius:20px;padding:4px 12px;cursor:pointer}
+  .chip.on{border-color:var(--cyan);color:var(--cyan)}
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .tile{background:var(--panel);border:1px solid var(--edge);border-radius:6px;padding:14px 16px}
+  .tile .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .tile .v{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .tile .d{font-size:11.5px;color:var(--dim);margin-top:2px;font-family:var(--mono)}
+  .tile.hero{border-color:var(--magenta);box-shadow:0 0 18px rgba(255,46,196,.12) inset}
+  .tile.hero .v{color:var(--magenta)}
+  .good{color:var(--v-invest)} .bad{color:#cc2f74} .warn{color:var(--v-trim)}
+
+  .chartwrap{margin-top:14px}
+  .leg{display:flex;gap:14px;flex-wrap:wrap;margin:2px 0 12px}
+  .leg span{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+  .leg i{width:14px;height:2.5px;display:inline-block}
+  #linechart{width:100%;height:auto;display:block}
+  #tip{position:fixed;z-index:50;background:#060912;border:1px solid var(--edge-hot);border-radius:5px;padding:9px 11px;
+    font-family:var(--mono);font-size:11.5px;pointer-events:none;display:none;max-width:280px;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+  #tip .t{color:var(--cyan);margin-bottom:4px}
+  #tip .r{display:flex;justify-content:space-between;gap:14px;color:var(--muted)}
+  #tip .r b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+    text-align:left;padding:8px 10px;border-bottom:1px solid var(--edge);white-space:nowrap}
+  th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+  td{padding:9px 10px;border-bottom:1px solid rgba(35,44,78,.5);vertical-align:top;font-family:var(--mono)}
+  td .ent{color:var(--ink)}
+  .vchip{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;
+    padding:3px 9px;border-radius:3px;color:#fff}
+  td.why{font-family:var(--sans);color:var(--muted);font-size:12.5px;max-width:320px}
+  td.why .act{color:var(--ink);font-weight:600}
+  td.why details{margin-top:6px}
+  td.why summary{cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--violet)}
+  td.why pre{font-family:var(--mono);font-size:11px;color:var(--dim);background:var(--panel-2);border:1px solid var(--edge);
+    border-radius:4px;padding:8px 10px;margin:6px 0 0;white-space:pre-wrap;overflow-x:auto}
+  .tblwrap{overflow-x:auto}
+  .empty{color:var(--dim);font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;text-align:center;padding:30px 0}
+  #realloc{margin-top:14px;font-size:12.5px;color:var(--muted)}
+  #realloc .rrow{padding:6px 0;border-bottom:1px solid rgba(35,44,78,.5);display:flex;gap:10px;justify-content:space-between;font-family:var(--mono);font-size:12px;flex-wrap:wrap}
+  #realloc .rrow b{color:var(--v-invest);font-weight:600}
+  .caveats{margin-top:14px;border:1px solid var(--edge);border-radius:4px;background:var(--panel-2);padding:12px 14px;font-size:12.5px;color:var(--muted)}
+  .caveats b{color:var(--ink)}
+  .footnote{margin-top:26px;color:var(--dim);font-size:11.5px;font-family:var(--mono);letter-spacing:.04em}
+
+  @media (max-width:640px){header{padding:14px 16px}#readout{margin-left:0}}
+  @media (prefers-reduced-motion:no-preference){
+    .tile.hero{animation:pulse 3s ease-in-out infinite}
+    @keyframes pulse{0%,100%{box-shadow:0 0 18px rgba(255,46,196,.10) inset}50%{box-shadow:0 0 26px rgba(255,46,196,.22) inset}}
+  }
+</style>
+
+<header>
+  <div class="logo"><span class="sl">PULSE</span>//<span class="au">MMM</span></div>
+  <div class="navsw"><a href="index.html">AUDIT</a> · <a class="cur" href="mmm.html">MMM</a></div>
+  <div class="tagline">marketing-mix modeling in your browser — transparent math, no AI, nothing uploaded</div>
+  <div id="readout">standby</div>
+</header>
+<div class="hintbar"><div><b>WHICH CHANNELS ACTUALLY DRIVE RESULTS?</b>
+  The Audit console judges ads inside one platform. This one looks across platforms: drop a weekly
+  spend-per-channel history and it fits a mix model — carryover (adstock), diminishing returns, and a least-squares fit —
+  then tells you each channel's measured ROI, what the <i>next</i> dollar earns, and where to shift budget.</div></div>
+
+<main>
+  <!-- 01 DATA FEED -->
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><span class="sec-title">Data feed</span>
+      <span class="sec-sub">one row per week (or day) · one spend column per channel · one results column</span></div>
+    <div class="panel">
+      <div id="drop" tabindex="0" role="button" aria-label="Upload CSV">
+        <div class="big">DROP CSV HERE — or click to browse</div>
+        <div class="hint">Needs: a date column, a spend column per channel, and a results column (revenue or conversions). 6+ months of weekly data works best. Daily data is auto-aggregated to weeks.</div>
+      </div>
+      <input type="file" id="file" accept=".csv,.tsv,text/csv">
+      <div class="feedrow">
+        <button class="btn ghost" id="loadsample">Try it: sample 52-week account</button>
+        <span id="parsemsg"></span>
+      </div>
+      <details class="fmt"><summary>▸ What the file should look like (and where to get it)</summary>
+        <p>A wide table, e.g. <code>week, meta_spend, google_spend, tv_spend, revenue</code> — one row per period.
+        Most teams build this in a spreadsheet in ten minutes: paste weekly spend totals from each ads manager
+        (each platform's export from the Audit page works as a source) plus weekly revenue or conversions from your
+        store/CRM. Save as CSV, drop it here. Columns that aren't spend (clicks, impressions) are auto-excluded — you can re-include anything below.</p></details>
+      <div class="notice" id="feednotice"></div>
+      <div id="setup">
+        <div class="maphead">Model setup — auto-detected, adjust if needed</div>
+        <div class="setgrid">
+          <div class="g"><label>Results column (what marketing drives)</label><select id="kpicol"></select>
+            <div class="exp">Revenue, conversions, orders, leads…</div></div>
+          <div class="g"><label>Results type</label>
+            <div class="modew"><button id="kpi-rev" class="on">Revenue</button><button id="kpi-conv">Conversions</button></div>
+            <div class="exp">Revenue → ROI per channel. Conversions → cost per conversion per channel.</div></div>
+          <div class="g" id="cpawrap" style="display:none"><label>Target cost per conversion</label><input type="number" id="targetcpa" value="40" min="0" step="1">
+            <div class="exp">Used as the break-even line for verdicts.</div></div>
+          <div class="g"><label>Currency symbol</label><input type="text" id="cur" value="$" maxlength="4"></div>
+        </div>
+        <div class="maphead" style="margin-top:14px">Channels in the model — click to include/exclude</div>
+        <div class="chips" id="chancols"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 MODEL READOUT -->
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><span class="sec-title">Model readout</span>
+      <span class="sec-sub">how well the model explains your results — check this before trusting the verdicts</span></div>
+    <div id="diag-empty" class="panel"><div class="empty">— awaiting data feed — load the sample above to see what this looks like —</div></div>
+    <div id="diag" style="display:none">
+      <div class="tiles" id="tiles"></div>
+      <div class="panel chartwrap">
+        <div class="maphead">Actual results vs model — the closer the lines, the more you can trust the split</div>
+        <div class="leg"><span><i style="background:var(--s-actual)"></i>ACTUAL</span><span><i style="background:var(--s-model)"></i>MODEL</span></div>
+        <div id="chartbox"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 CHANNEL VERDICTS -->
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><span class="sec-title">Channel verdicts</span>
+      <span class="sec-sub">measured contribution, what the next dollar earns, and where to move budget</span></div>
+    <div id="queue-empty" class="panel"><div class="empty">— awaiting data feed —</div></div>
+    <div class="panel" id="queuepanel" style="display:none">
+      <div class="tblwrap"><table id="qtable"></table></div>
+      <div id="realloc"></div>
+      <div class="caveats"><b>What this can and can't tell you.</b> This is a lite mix model: it finds the spend-results
+        relationship in <i>your</i> history. It needs spend that actually varies (a channel spent flat every week can't be
+        measured), 6+ months of data, and it reads correlation — a channel that only runs during your peak season will look
+        better than it is. Channels that overlap heavily (brand search vs. Meta retargeting) can blur into each other.
+        Use it for direction and budget splits, then verify with the Audit console and holdout tests, not as courtroom proof.</div>
+      <div class="feedrow" style="margin-top:16px">
+        <button class="btn mag" id="exportcsv">Export channel report (CSV)</button>
+        <button class="btn ghost" id="copysum">Copy summary for client/Slack</button>
+        <span id="copymsg" style="font-family:var(--mono);font-size:11.5px;color:var(--v-invest)"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="footnote">PULSE//MMM runs entirely in this page — adstock + saturation + ordinary least squares, computed
+    in your browser. Open source (MIT): <a href="https://github.com/riz1k9/pulse-audit" rel="noopener">github.com/riz1k9/pulse-audit</a></div>
+</main>
+<div id="tip"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+
+/* ============ csv parsing (shared approach with the audit console) ============ */
+async function readAny(f){
+  const buf=new Uint8Array(await f.arrayBuffer());
+  let enc="utf-8";
+  if(buf[0]===0xFF&&buf[1]===0xFE)enc="utf-16le";
+  else if(buf[0]===0xFE&&buf[1]===0xFF)enc="utf-16be";
+  else{let nul=0;for(let i=0;i<Math.min(buf.length,2000);i++)if(buf[i]===0)nul++;
+    if(nul>50)enc="utf-16le";}
+  return new TextDecoder(enc).decode(buf);
+}
+function parseCSV(text){
+  text=text.replace(/^﻿/,"");
+  const head=text.split(/\r?\n/).slice(0,5).join("\n");
+  const counts={",":0,";":0,"\t":0}; let q=false;
+  for(const ch of head){ if(ch==='"')q=!q; else if(!q&&ch in counts)counts[ch]++; }
+  const delim=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+  const rows=[];let row=[],cell="",inq=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(inq){ if(ch==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else inq=false; } else cell+=ch; }
+    else{
+      if(ch==='"')inq=true;
+      else if(ch===delim){row.push(cell);cell="";}
+      else if(ch==="\n"||ch==="\r"){ if(ch==="\r"&&text[i+1]==="\n")i++;
+        row.push(cell);cell=""; if(row.some(c=>c.trim()!==""))rows.push(row); row=[]; }
+      else cell+=ch;
+    }
+  }
+  row.push(cell); if(row.some(c=>c.trim()!==""))rows.push(row);
+  return {rows,delim};
+}
+function parseNum(s){
+  if(s==null)return NaN; s=String(s).trim();
+  if(!s||s==="--"||s==="—")return NaN;
+  if(state.commaDec)s=s.replace(/\./g,"").replace(/,/g,".");
+  const v=parseFloat(s.replace(/[^0-9.\-]/g,""));
+  return isFinite(v)?v:NaN;
+}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;")}
+
+/* ============ state ============ */
+let state={raw:null,headers:null,dateCol:-1,kpiCol:-1,channels:[],excluded:new Set(),
+  periods:null,commaDec:false,kpiType:"rev",cur:"$",targetCPA:40,sourceName:"",model:null,aggregated:false};
+
+/* ============ ingest & column detection ============ */
+function ingest(text,name){
+  const{rows,delim}=parseCSV(text);
+  state.commaDec=delim===";";
+  if(rows.length<8){msg("Need at least a couple of months of rows — this file has "+Math.max(0,rows.length-1)+".","err");return;}
+  state.headers=rows[0].map(h=>h.trim());
+  state.raw=rows.slice(1);
+  state.sourceName=name;
+  const n=state.raw.length, H=state.headers.length;
+  // date column: >80% parseable dates
+  state.dateCol=-1;
+  for(let c=0;c<H;c++){
+    let ok=0;for(const r of state.raw){const t=Date.parse((r[c]||"").trim());if(isFinite(t))ok++;}
+    if(ok>=n*0.8){state.dateCol=c;break;}
+  }
+  if(state.dateCol<0){msg("No date column found — the model needs one row per week or day with a date.","err");return;}
+  // numeric columns
+  const numeric=[];
+  for(let c=0;c<H;c++){
+    if(c===state.dateCol)continue;
+    let ok=0;for(const r of state.raw){if(isFinite(parseNum(r[c])))ok++;}
+    if(ok>=n*0.8)numeric.push(c);
+  }
+  if(numeric.length<2){msg("Need at least one spend column and one results column.","err");return;}
+  // KPI guess by header
+  const kpiSyn=["revenue","sales","conv value","conversion value","conversions","orders","purchases","leads","signups","kpi","results"];
+  const nh=state.headers.map(h=>h.toLowerCase());
+  state.kpiCol=numeric.find(c=>kpiSyn.some(s=>nh[c].includes(s)));
+  if(state.kpiCol==null)state.kpiCol=numeric[numeric.length-1];
+  state.kpiType=/conv|lead|order|signup|purchase/.test(nh[state.kpiCol])&&!/value/.test(nh[state.kpiCol])?"conv":"rev";
+  // channels: other numeric cols; auto-exclude obvious non-spend
+  state.channels=numeric.filter(c=>c!==state.kpiCol);
+  state.excluded=new Set(state.channels.filter(c=>/click|impr|ctr|cpc|cpm|freq|rate|roas|cpa/.test(nh[c])));
+  msg(`Parsed ${n} rows · ${state.headers.length} columns from ${name}.`,"ok");
+  renderSetup();
+  runModel();
+}
+function msg(t,cls){const m=$("#parsemsg");m.textContent=t;m.className=cls||"";}
+function notice(t){const el=$("#feednotice");el.textContent=t||"";el.style.display=t?"block":"none";}
+
+function renderSetup(){
+  $("#setup").style.display="block";
+  const numericCols=[state.kpiCol,...state.channels];
+  $("#kpicol").innerHTML=numericCols.map(c=>`<option value="${c}"${c===state.kpiCol?" selected":""}>${esc(state.headers[c])}</option>`).join("");
+  $("#kpicol").onchange=e=>{
+    const c=+e.target.value;
+    state.channels=[...new Set([...state.channels,state.kpiCol])].filter(x=>x!==c);
+    state.kpiCol=c;renderSetup();runModel();};
+  $("#chancols").innerHTML=state.channels.map(c=>
+    `<button class="chip${state.excluded.has(c)?"":" on"}" data-c="${c}">${esc(state.headers[c])}</button>`).join("");
+  $$("#chancols .chip").forEach(b=>b.onclick=()=>{
+    const c=+b.dataset.c;
+    state.excluded.has(c)?state.excluded.delete(c):state.excluded.add(c);
+    renderSetup();runModel();});
+  $("#kpi-rev").classList.toggle("on",state.kpiType==="rev");
+  $("#kpi-conv").classList.toggle("on",state.kpiType==="conv");
+  $("#cpawrap").style.display=state.kpiType==="conv"?"block":"none";
+}
+$("#kpi-rev").onclick=()=>{state.kpiType="rev";renderSetup();runModel();};
+$("#kpi-conv").onclick=()=>{state.kpiType="conv";renderSetup();runModel();};
+$("#targetcpa").oninput=e=>{const v=parseFloat(e.target.value);if(isFinite(v)&&v>0){state.targetCPA=v;runModel();}};
+$("#cur").oninput=e=>{state.cur=e.target.value||"$";runModel();};
+
+/* ============ periods: sort by date, weekly aggregation ============ */
+function buildPeriods(){
+  const chans=state.channels.filter(c=>!state.excluded.has(c));
+  let rows=state.raw.map(r=>{
+    const t=Date.parse((r[state.dateCol]||"").trim());
+    if(!isFinite(t))return null;
+    const spend=chans.map(c=>{const v=parseNum(r[c]);return isFinite(v)?v:0;});
+    const kpi=parseNum(r[state.kpiCol]);
+    return{t,spend,kpi:isFinite(kpi)?kpi:0};
+  }).filter(Boolean).sort((a,b)=>a.t-b.t);
+  // cadence: median gap
+  const gaps=[];for(let i=1;i<rows.length;i++)gaps.push((rows[i].t-rows[i-1].t)/86400000);
+  gaps.sort((a,b)=>a-b);
+  const medGap=gaps.length?gaps[Math.floor(gaps.length/2)]:7;
+  state.aggregated=false;
+  if(medGap<=2&&rows.length>60){ // daily → ISO-week buckets
+    const wk=new Map();
+    for(const r of rows){
+      const key=Math.floor((r.t+3*86400000)/(7*86400000)); // week bucket
+      if(!wk.has(key))wk.set(key,{t:r.t,spend:r.spend.map(()=>0),kpi:0});
+      const w=wk.get(key);
+      r.spend.forEach((v,i)=>w.spend[i]+=v);w.kpi+=r.kpi;
+    }
+    rows=[...wk.values()].sort((a,b)=>a.t-b.t);
+    state.aggregated=true;
+  }
+  return{rows,chans};
+}
+
+/* ============ the model: adstock + saturation + OLS ============ */
+function adstock(x,th){const z=new Array(x.length);let a=0;for(let i=0;i<x.length;i++){a=x[i]+th*a;z[i]=a;}return z;}
+function olsFit(X,y){ // X: n×p (with intercept col), returns beta or null
+  const n=X.length,p=X[0].length;
+  const A=Array.from({length:p},()=>new Array(p+1).fill(0));
+  for(let i=0;i<n;i++)for(let a=0;a<p;a++){
+    for(let b=0;b<p;b++)A[a][b]+=X[i][a]*X[i][b];
+    A[a][p]+=X[i][a]*y[i];
+  }
+  for(let col=0;col<p;col++){ // gaussian elimination, partial pivot
+    let piv=col;
+    for(let r=col+1;r<p;r++)if(Math.abs(A[r][col])>Math.abs(A[piv][col]))piv=r;
+    if(Math.abs(A[piv][col])<1e-9)return null;
+    [A[col],A[piv]]=[A[piv],A[col]];
+    for(let r=0;r<p;r++){
+      if(r===col)continue;
+      const f=A[r][col]/A[col][col];
+      for(let cc=col;cc<=p;cc++)A[r][cc]-=f*A[col][cc];
+    }
+  }
+  return A.map((row,i)=>row[p]/row[i]);
+}
+function r2of(yhat,y){
+  const mean=y.reduce((s,v)=>s+v,0)/y.length;
+  let sse=0,sst=0;
+  for(let i=0;i<y.length;i++){sse+=(y[i]-yhat[i])**2;sst+=(y[i]-mean)**2;}
+  return sst>0?1-sse/sst:0;
+}
+const THS=[0,0.2,0.4,0.6,0.8], ALS=[0.4,0.6,0.8,1.0];
+
+function fitModel(rows,K){
+  const y=rows.map(r=>r.kpi), n=rows.length;
+  const spends=Array.from({length:K},(_,k)=>rows.map(r=>r.spend[k]));
+  const params=Array.from({length:K},()=>({th:0.4,al:0.8}));
+  const features=()=>{
+    const F=params.map((p,k)=>adstock(spends[k],p.th).map(z=>Math.pow(z,p.al)));
+    return rows.map((_,i)=>[1,...F.map(f=>f[i])]);
+  };
+  const evalR2=()=>{
+    const X=features(),b=olsFit(X,y);
+    if(!b)return{r2:-1,b:null,X:null};
+    const yhat=X.map(row=>row.reduce((s,v,j)=>s+v*b[j],0));
+    return{r2:r2of(yhat,y),b,X,yhat};
+  };
+  for(let sweep=0;sweep<2;sweep++)
+    for(let k=0;k<K;k++){
+      let best=null;
+      for(const th of THS)for(const al of ALS){
+        params[k]={th,al};
+        const r=evalR2();
+        if(!best||r.r2>best.r2)best={r2:r.r2,th,al};
+      }
+      params[k]={th:best.th,al:best.al};
+    }
+  // final fit + non-negativity by elimination
+  const active=Array.from({length:K},()=>true);
+  let fit;
+  for(let iter=0;iter<K+1;iter++){
+    const idx=[...Array(K).keys()].filter(k=>active[k]);
+    const F=idx.map(k=>adstock(spends[k],params[k].th).map(z=>Math.pow(z,params[k].al)));
+    const X=rows.map((_,i)=>[1,...F.map(f=>f[i])]);
+    const b=olsFit(X,y);
+    if(!b)return null;
+    const bad=idx.filter((k,j)=>b[j+1]<0);
+    fit={idx,X,b};
+    if(!bad.length)break;
+    for(const k of bad)active[k]=false;
+  }
+  const beta=new Array(K).fill(0);
+  fit.idx.forEach((k,j)=>beta[k]=fit.b[j+1]);
+  const intercept=fit.b[0];
+  const yhat=rows.map((_,i)=>{
+    let v=intercept;
+    for(let k=0;k<K;k++)if(beta[k]>0)v+=beta[k]*Math.pow(adstock(spends[k],params[k].th)[i],params[k].al);
+    return v;
+  });
+  // simple caching of transforms for reporting
+  const Z=params.map((p,k)=>adstock(spends[k],p.th));
+  // holdout: refit betas on first 80%, MAPE on last 20%
+  let mape=null;
+  const nTr=Math.floor(n*0.8);
+  if(n-nTr>=4){
+    const idx=[...Array(K).keys()].filter(k=>beta[k]>0);
+    const Xtr=[],ytr=[];
+    for(let i=0;i<nTr;i++){Xtr.push([1,...idx.map(k=>Math.pow(Z[k][i],params[k].al))]);ytr.push(y[i]);}
+    const bh=olsFit(Xtr,ytr);
+    if(bh){
+      let s=0,c=0;
+      for(let i=nTr;i<n;i++){
+        let v=bh[0];idx.forEach((k,j)=>v+=bh[j+1]*Math.pow(Z[k][i],params[k].al));
+        if(y[i]>0){s+=Math.abs(y[i]-v)/y[i];c++;}
+      }
+      if(c)mape=s/c;
+    }
+  }
+  return{params,beta,intercept,yhat,y,Z,spends,r2:r2of(yhat,y),mape,n};
+}
+
+/* ============ run + verdicts ============ */
+function money(v){return state.cur+(Math.abs(v)>=1000?v.toLocaleString(undefined,{maximumFractionDigits:0}):v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}))}
+function runModel(){
+  if(!state.raw)return;
+  const{rows,chans}=buildPeriods();
+  const K=chans.length;
+  notice("");
+  if(K<1){notice("⚠ No channels included — click at least one channel chip above.");return;}
+  if(rows.length<K+6){notice(`⚠ Only ${rows.length} usable periods for ${K} channels — the model needs at least ${K+6}. Add more history or exclude channels.`);return;}
+  if(rows.length<24)notice(`⚠ Only ${rows.length} periods — the model will run, but treat results as rough direction. 26+ weeks is much more reliable.`);
+  const model=fitModel(rows,K);
+  if(!model){notice("⚠ The model couldn't be fit (channels may be duplicates of each other). Try excluding one of two near-identical columns.");return;}
+  state.model=model; state.periods=rows; state.chanIdx=chans;
+  // per-channel report
+  const reps=chans.map((c,k)=>{
+    const name=state.headers[c];
+    const{th,al}=model.params[k], b=model.beta[k];
+    const spendTot=model.spends[k].reduce((s,v)=>s+v,0);
+    const activeZ=model.Z[k].filter((z,i)=>model.spends[k][i]>0||z>1);
+    const zbar=activeZ.length?activeZ.reduce((s,v)=>s+v,0)/activeZ.length:0;
+    const contrib=b>0?model.Z[k].reduce((s,z)=>s+b*Math.pow(z,al),0):0;
+    // marginal: d(kpi)/d(spend) at typical level, incl. carryover 1/(1-θ)
+    const marginal=b>0&&zbar>0?b*al*Math.pow(zbar,al-1)/(1-th):0;
+    // spend variation check
+    const mean=spendTot/model.spends[k].length;
+    const sd=Math.sqrt(model.spends[k].reduce((s,v)=>s+(v-mean)**2,0)/model.spends[k].length);
+    const flat=mean>0&&sd/mean<0.08;
+    return{c,k,name,th,al,b,spendTot,contrib,marginal,flat,zbar};
+  });
+  const kpiTot=model.y.reduce((s,v)=>s+v,0);
+  const mediaTot=reps.reduce((s,r)=>s+r.contrib,0);
+  const baseTot=Math.max(0,kpiTot-mediaTot);
+  // verdicts
+  const proven=reps.filter(r=>r.b>0&&!r.flat&&r.contrib>kpiTot*0.005);
+  const medMarg=proven.length?[...proven].sort((a,b)=>a.marginal-b.marginal)[Math.floor(proven.length/2)].marginal:0;
+  const breakeven=state.kpiType==="rev"?1:1/state.targetCPA; // KPI units per $1
+  for(const r of reps){
+    if(r.flat){r.verdict="UNPROVEN";r.note="Spend barely varies week to week — the model can't separate its effect from baseline. Vary spend (or run a holdout test) to measure it.";continue;}
+    if(r.b<=0||r.contrib<=kpiTot*0.005){r.verdict="UNPROVEN";r.note="No measurable lift in this data — its spend pattern doesn't track results. Could be genuinely weak, or credit is being absorbed by an overlapping channel.";continue;}
+    if(r.marginal<breakeven*0.9){r.verdict="TRIM";r.note=`The next dollar here returns ${state.kpiType==="rev"?money(r.marginal)+" — below the "+money(breakeven)+" break-even":"a conversion at "+money(1/r.marginal)+", worse than your "+money(state.targetCPA)+" target"}. Past spend still contributed — it's the margin that's exhausted.`;}
+    else if(r.marginal>=breakeven*1.1&&r.marginal>=medMarg){r.verdict="INVEST";r.note=`Strong marginal return and not yet saturated — the best home for incremental budget.`;}
+    else{r.verdict="HOLD";r.note="Contributing at a sustainable rate; keep spend steady.";}
+  }
+  renderAll(reps,{kpiTot,mediaTot,baseTot,breakeven});
+}
+
+/* ============ rendering ============ */
+const VC={INVEST:"#00a29b",HOLD:"#55628a",TRIM:"#ad8c25",UNPROVEN:"#3a4262"};
+function renderAll(reps,agg){
+  lastReps=reps;lastAgg=agg;
+  const m=state.model;
+  $("#readout").innerHTML=`feed: <b>${esc(state.sourceName)}</b> · periods: <b>${m.n}</b>${state.aggregated?" (weekly agg)":""} · channels: <b>${reps.length}</b>`;
+  $("#diag-empty").style.display="none";$("#diag").style.display="block";
+  $("#queue-empty").style.display="none";$("#queuepanel").style.display="block";
+  // tiles
+  const fitCls=m.r2>=0.75?"good":m.r2>=0.5?"warn":"bad";
+  const fitWord=m.r2>=0.75?"trustworthy":m.r2>=0.5?"usable — treat as direction":"weak — don't act on the split yet";
+  const best=[...reps].filter(r=>r.verdict==="INVEST").sort((a,b)=>b.marginal-a.marginal)[0];
+  const kpiName=state.kpiType==="rev"?"revenue":"conversions";
+  $("#tiles").innerHTML=[
+    {k:"Model fit (R²)",v:`<span class="${fitCls}">${(m.r2*100).toFixed(0)}%</span>`,d:fitWord},
+    {k:"Holdout error",v:m.mape!=null?(m.mape*100).toFixed(1)+"%":"—",d:"avg miss on unseen last 20%"},
+    {k:"Base "+kpiName,v:Math.round(agg.baseTot/agg.kpiTot*100)+"%",d:"would happen with ads off (modeled)"},
+    {k:"Media-driven",v:Math.round(agg.mediaTot/agg.kpiTot*100)+"%",d:"attributed to the channels"},
+    {k:"Best next dollar",v:best?esc(best.name):"—",d:best?(state.kpiType==="rev"?money(best.marginal)+" per $1":money(1/best.marginal)+" per conv"):"nothing clears break-even",hero:!!best},
+  ].map(t=>`<div class="tile${t.hero?" hero":""}"><div class="k">${t.k}</div><div class="v">${t.v}</div><div class="d">${t.d||""}</div></div>`).join("");
+  renderChart();
+  renderTable(reps,agg);
+  renderRealloc(reps);
+}
+function renderChart(){
+  const m=state.model,W=820,H=230,P={l:56,r:64,t:12,b:24};
+  const n=m.n, ymin=Math.min(...m.y,...m.yhat)*0.95, ymax=Math.max(...m.y,...m.yhat)*1.03;
+  const xs=i=>P.l+(W-P.l-P.r)*(n>1?i/(n-1):0);
+  const ys=v=>P.t+(H-P.t-P.b)*(1-(v-ymin)/(ymax-ymin||1));
+  const line=arr=>arr.map((v,i)=>`${xs(i).toFixed(1)},${ys(v).toFixed(1)}`).join(" ");
+  const grid=[0,.5,1].map(f=>{const v=ymin+(ymax-ymin)*f;
+    return`<line x1="${P.l}" y1="${ys(v)}" x2="${W-P.r}" y2="${ys(v)}" stroke="#232c4e" stroke-width="1"/>
+      <text x="${P.l-8}" y="${ys(v)+4}" text-anchor="end" font-size="10" fill="#5d6788" font-family="ui-monospace,monospace">${v>=1000?(v/1000).toFixed(1)+"k":v.toFixed(0)}</text>`;}).join("");
+  $("#chartbox").innerHTML=`<svg id="linechart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Actual vs modeled results over time">
+    ${grid}
+    <polyline points="${line(m.y)}" fill="none" stroke="#00a29b" stroke-width="2"/>
+    <polyline points="${line(m.yhat)}" fill="none" stroke="#7568d8" stroke-width="2" stroke-dasharray="5 3"/>
+    <text x="${W-P.r+6}" y="${ys(m.y[n-1])+4}" font-size="10" fill="#00a29b" font-family="ui-monospace,monospace">ACTUAL</text>
+    <text x="${W-P.r+6}" y="${ys(m.yhat[n-1])+4}" font-size="10" fill="#7568d8" font-family="ui-monospace,monospace">MODEL</text>
+    <rect id="charthit" x="${P.l}" y="${P.t}" width="${W-P.l-P.r}" height="${H-P.t-P.b}" fill="transparent"/>
+  </svg>`;
+  const svg=$("#linechart"),tip=$("#tip");
+  svg.onmousemove=ev=>{
+    const r=svg.getBoundingClientRect();
+    const fx=(ev.clientX-r.left)/r.width*W;
+    const i=Math.max(0,Math.min(n-1,Math.round((fx-P.l)/((W-P.l-P.r)/(n-1||1)))));
+    const d=new Date(state.periods[i].t).toISOString().slice(0,10);
+    tip.innerHTML=`<div class="t">${d}</div><div class="r">actual <b>${money(m.y[i])}</b></div><div class="r">model <b>${money(m.yhat[i])}</b></div>`;
+    tip.style.display="block";
+    let x=ev.clientX+14;if(x+tip.offsetWidth>innerWidth-10)x=ev.clientX-tip.offsetWidth-14;
+    tip.style.left=x+"px";tip.style.top=(ev.clientY+14)+"px";
+  };
+  svg.onmouseleave=()=>tip.style.display="none";
+}
+function renderTable(reps,agg){
+  const rev=state.kpiType==="rev";
+  const sorted=[...reps].sort((a,b)=>b.contrib-a.contrib);
+  $("#qtable").innerHTML=`<thead><tr>
+    <th>Verdict</th><th>Channel</th><th class="num">Spend</th>
+    <th class="num" title="Modeled share of results driven by this channel">Contribution</th>
+    <th class="num" title="${rev?"Contribution ÷ spend":"Spend ÷ contributed conversions"}">${rev?"ROI":"Cost/conv"}</th>
+    <th class="num" title="What one more dollar per week earns at current levels, carryover included">Next $1</th>
+    <th class="num" title="Share of this week's effect that carries into later weeks">Carryover</th>
+    <th>Why / action</th></tr></thead><tbody>`+
+    sorted.map(r=>{
+      const roi=r.spendTot>0&&r.contrib>0?(rev?(r.contrib/r.spendTot).toFixed(2):money(r.spendTot/r.contrib)):"—";
+      const marg=r.marginal>0?(rev?money(r.marginal):money(1/r.marginal)):"—";
+      const share=agg.kpiTot>0?(r.contrib/agg.kpiTot*100).toFixed(1)+"%":"—";
+      const carry=Math.round(r.th/(1+r.th)*100);
+      const sat=r.al>=1?"none detected":r.al>=0.8?"mild":r.al>=0.6?"moderate":"strong";
+      const math=[
+        `carryover (adstock): z_t = spend_t + ${r.th}·z_(t−1)  → ${carry}% of impact lands in later weeks`,
+        `diminishing returns: effect = ${r.b>0?r.b.toPrecision(3):"0"} × z^${r.al}  (saturation: ${sat})`,
+        `total contribution = Σ effect = ${money(r.contrib)}  (${share} of all ${rev?"revenue":"conversions"})`,
+        r.marginal>0?`next-dollar rate = β·α·z̄^(α−1) ÷ (1−θ) = ${r.marginal.toPrecision(3)} ${rev?"revenue":"conv"}/$ at typical weekly level ${money(r.zbar)}`:`no positive coefficient survived the fit`,
+      ].join("\n");
+      return`<tr><td><span class="vchip" style="background:${VC[r.verdict]}">${r.verdict}</span></td>
+      <td><div class="ent">${esc(r.name)}</div></td>
+      <td class="num">${money(r.spendTot)}</td>
+      <td class="num">${r.contrib>0?money(r.contrib)+" · "+share:"—"}</td>
+      <td class="num">${roi}</td><td class="num">${marg}</td><td class="num">${r.b>0?carry+"%":"—"}</td>
+      <td class="why">${esc(r.note)}<details><summary>▸ show the math</summary><pre>${esc(math)}</pre></details></td></tr>`;
+    }).join("")+"</tbody>";
+}
+function renderRealloc(reps){
+  const inv=[...reps].filter(r=>r.verdict==="INVEST").sort((a,b)=>b.marginal-a.marginal);
+  const trim=[...reps].filter(r=>r.verdict==="TRIM").sort((a,b)=>a.marginal-b.marginal);
+  const el=$("#realloc");
+  if(!inv.length||!trim.length){el.innerHTML=inv.length?`<div class="maphead" style="margin-top:8px">Reallocation</div>No channel is clearly below break-even to fund the winners from — grow ${esc(inv[0].name)} from new budget instead.`:"";return;}
+  const wk=state.model.n;
+  const rows=trim.map(t=>{
+    const move=t.spendTot/wk*0.10;
+    const gain=inv[0].marginal-t.marginal;
+    const gainTxt=state.kpiType==="rev"?money(move*gain)+"/wk":(move*gain).toFixed(1)+" conv/wk";
+    return`<div class="rrow"><span>Move 10%/wk of ${esc(t.name)} (${money(move)}/wk) → ${esc(inv[0].name)}</span>
+      <span><b>≈ +${gainTxt}</b> at current margins</span></div>`;
+  }).join("");
+  el.innerHTML=`<div class="maphead" style="margin-top:8px">Reallocation — model-suggested shifts (start at 10%, re-measure)</div>${rows}`;
+}
+
+/* ============ exports ============ */
+let lastReps=null,lastAgg=null;
+$("#exportcsv").onclick=()=>{
+  if(!lastReps)return;
+  const rev=state.kpiType==="rev";
+  const q=s=>`"${String(s).replace(/"/g,'""')}"`;
+  const lines=[["verdict","channel","total_spend","contribution","contribution_share",rev?"roi":"cost_per_conv","next_dollar_rate","carryover_pct","note"].join(",")];
+  for(const r of [...lastReps].sort((a,b)=>b.contrib-a.contrib)){
+    const roi=r.spendTot>0&&r.contrib>0?(rev?(r.contrib/r.spendTot).toFixed(2):(r.spendTot/r.contrib).toFixed(2)):"";
+    lines.push([r.verdict,q(r.name),r.spendTot.toFixed(2),r.contrib.toFixed(2),
+      lastAgg.kpiTot>0?(r.contrib/lastAgg.kpiTot*100).toFixed(1)+"%":"",roi,
+      r.marginal>0?r.marginal.toPrecision(3):"",r.b>0?Math.round(r.th/(1+r.th)*100):"",q(r.note)].join(","));
+  }
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="pulse-mmm-channels.csv";a.click();URL.revokeObjectURL(a.href);
+};
+$("#copysum").onclick=()=>{
+  if(!lastReps||!state.model)return;
+  const m=state.model,rev=state.kpiType==="rev";
+  let t=`MARKETING MIX REPORT — ${state.sourceName}\nModel fit R² ${(m.r2*100).toFixed(0)}%`+
+    (m.mape!=null?` · holdout error ${(m.mape*100).toFixed(1)}%`:"")+
+    `\nBase ${Math.round(lastAgg.baseTot/lastAgg.kpiTot*100)}% · media-driven ${Math.round(lastAgg.mediaTot/lastAgg.kpiTot*100)}%\n\n`;
+  for(const r of [...lastReps].sort((a,b)=>b.contrib-a.contrib)){
+    const roi=r.spendTot>0&&r.contrib>0?(rev?`ROI ${(r.contrib/r.spendTot).toFixed(2)}`:`cost/conv ${money(r.spendTot/r.contrib)}`):"unmeasured";
+    t+=`${r.verdict} — ${r.name}: spend ${money(r.spendTot)}, ${roi}. ${r.note}\n`;
+  }
+  navigator.clipboard.writeText(t).then(()=>{$("#copymsg").textContent="copied ✓";setTimeout(()=>$("#copymsg").textContent="",2500);},
+    ()=>{$("#copymsg").textContent="couldn't copy — clipboard blocked";setTimeout(()=>$("#copymsg").textContent="",2500);});
+};
+
+/* ============ inputs ============ */
+$("#drop").onclick=()=>$("#file").click();
+$("#drop").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("#file").click();}};
+$("#file").onchange=async e=>{const f=e.target.files[0];if(f)ingest(await readAny(f),f.name);e.target.value="";};
+["dragover","dragenter"].forEach(ev=>$("#drop").addEventListener(ev,e=>{e.preventDefault();$("#drop").classList.add("hot")}));
+["dragleave","drop"].forEach(ev=>$("#drop").addEventListener(ev,e=>{e.preventDefault();$("#drop").classList.remove("hot")}));
+$("#drop").addEventListener("drop",async e=>{const f=e.dataTransfer.files[0];if(f)ingest(await readAny(f),f.name);});
+
+/* ============ sample 52-week account ============ */
+const SAMPLE=`week,meta_spend,google_spend,tv_spend,display_spend,revenue
+2025-08-25,2036.97,2317.94,0.00,1114.04,13408.40
+2025-09-01,2160.64,2294.00,0.00,1100.05,14792.42
+2025-09-08,2839.76,2237.83,0.00,747.30,15876.41
+2025-09-15,3156.68,1984.48,0.00,680.86,16564.91
+2025-09-22,3387.04,2023.85,0.00,517.38,17253.65
+2025-09-29,3484.80,1582.78,0.00,635.14,17170.41
+2025-10-06,3562.24,1481.23,0.00,958.64,16700.19
+2025-10-13,3231.97,1176.19,0.00,991.58,16833.43
+2025-10-20,3433.41,1271.22,4000.00,1201.24,18785.01
+2025-10-27,3199.15,1463.42,4000.00,1216.89,19726.70
+2025-11-03,3379.67,1512.43,4000.00,943.50,20728.41
+2025-11-10,2777.17,1914.86,4000.00,827.44,20058.25
+2025-11-17,2249.40,2066.06,4000.00,610.80,19788.25
+2025-11-24,1637.00,2338.69,0.00,613.64,17843.27
+2025-12-01,1631.09,2474.81,0.00,723.37,17011.23
+2025-12-08,1149.31,2520.27,0.00,822.18,15369.90
+2025-12-15,1151.37,2328.47,0.00,1070.42,14604.25
+2025-12-22,507.38,2068.63,0.00,1227.98,12643.29
+2025-12-29,411.88,1565.23,0.00,1244.98,11122.78
+2026-01-05,496.56,1268.18,0.00,975.83,10795.40
+2026-01-12,560.66,1163.43,0.00,757.36,11092.43
+2026-01-19,310.99,1359.28,0.00,654.24,10270.02
+2026-01-26,418.13,1149.89,0.00,658.13,10458.50
+2026-02-02,821.20,1451.87,0.00,625.60,11201.62
+2026-02-09,1121.80,1983.89,0.00,953.14,12560.91
+2026-02-16,1360.24,2011.87,0.00,1057.33,13055.38
+2026-02-23,2176.03,2109.45,0.00,1198.85,14764.82
+2026-03-02,2398.32,2239.31,0.00,1240.86,14979.22
+2026-03-09,2511.66,2363.35,0.00,1111.98,15948.64
+2026-03-16,2933.33,2120.37,0.00,808.03,16368.72
+2026-03-23,3219.80,1810.51,5000.00,628.84,18298.32
+2026-03-30,3775.96,1507.50,5000.00,508.76,21071.32
+2026-04-06,3771.91,1488.62,5000.00,716.05,21415.53
+2026-04-13,3261.76,1237.30,5000.00,932.38,21623.60
+2026-04-20,3608.79,1056.38,5000.00,1154.75,21637.79
+2026-04-27,3191.53,1288.81,5000.00,1187.94,21668.48
+2026-05-04,2979.62,1626.26,5000.00,1131.57,21944.19
+2026-05-11,2611.57,1718.82,0.00,941.65,19674.47
+2026-05-18,2044.93,2271.28,0.00,894.94,18742.39
+2026-05-25,1639.23,2134.85,0.00,698.17,16868.37
+2026-06-01,1745.60,2276.94,0.00,544.64,15844.47
+2026-06-08,1386.35,2542.22,0.00,679.33,14958.62
+2026-06-15,1337.86,2192.11,0.00,861.49,14221.07
+2026-06-22,594.12,1996.66,0.00,1152.29,12296.32
+2026-06-29,237.78,1545.64,0.00,1184.31,10950.33
+2026-07-06,741.91,1379.43,0.00,1161.93,11203.38
+2026-07-13,494.47,1243.38,0.00,1001.68,10778.02
+2026-07-20,873.67,1221.51,0.00,842.56,11250.73
+2026-07-27,797.74,1165.24,0.00,573.06,11428.15
+2026-08-03,1087.72,1557.28,0.00,696.80,11930.42
+2026-08-10,998.73,1716.90,0.00,681.64,12086.52
+2026-08-17,1884.54,1981.34,0.00,808.20,13538.57`;
+$("#loadsample").onclick=()=>ingest(SAMPLE,"sample 52-week account");
+</script>
