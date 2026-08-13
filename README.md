@@ -1,11 +1,10 @@
 # PULSE//AUDIT
 
-**Offline, rule-based ad account auditor + lite marketing-mix model.** Two single-file tools:
+**Offline, rule-based ad account auditor.** Drop in a CSV export from Meta, Google Ads, TikTok, or LinkedIn, set one target number, and get a ranked fix list — a **SCALE / KEEP / WATCH / PAUSE / KILL** verdict for every ad or keyword, with the exact math behind each call.
 
-- **`index.html` — the Audit console.** Drop in a CSV export from Meta, Google Ads, TikTok, or LinkedIn, set one target number, and get a ranked fix list — a **SCALE / KEEP / WATCH / PAUSE / KILL** verdict for every ad or keyword, with the exact math behind each call.
-- **`mmm.html` — the MMM console.** Drop in a weekly spend-per-channel history and it fits a marketing-mix model (adstock carryover + diminishing-returns saturation + least squares) in your browser — measured ROI per channel, what the *next* dollar earns, and where to shift budget.
+No AI. No uploads. No accounts. One HTML file — everything runs in your browser, and your data never leaves the page.
 
-No AI. No uploads. No accounts. Everything runs in your browser, and your data never leaves the page.
+**[▶ Open the tool](https://riz1k9.github.io/pulse-audit/)** · companion: **[PULSE//MMM](https://github.com/riz1k9/pulse-mmm)** for cross-channel budget splits.
 
 ## Why
 
@@ -54,15 +53,9 @@ The column detector reads native export headers from **Meta Ads Manager** (ad/ad
 
 Only run one or two platforms? That's the normal case — the platform picker just hides the guides you don't need. Missing columns degrade gracefully (e.g. LinkedIn exports without a conversions column get creative-signal audits instead of false KILL verdicts).
 
-## The MMM console (`mmm.html`)
+## Companion tool
 
-The Audit console is bottom-up (which ads to fix inside one platform); the MMM console is top-down (which *channels* deserve the budget). Feed it a wide CSV — `week, meta_spend, google_spend, tv_spend, revenue` — with 6+ months of weekly rows (daily data is auto-aggregated), and it:
-
-1. Fits **adstock** (θ grid — how much of a week's impact carries into later weeks) and **saturation** (α grid — diminishing returns) per channel by coordinate descent, then solves ordinary least squares with a non-negativity pass.
-2. Reports honestly: **R² and a 20% holdout error** decide whether the split is *trustworthy / directional / too weak to act on*, flat-spend channels are marked **UNPROVEN** (a channel that never varies can't be measured), and every number has a "show the math" trace.
-3. Gives verdicts on the **margin**, not the average: a channel with positive past ROI still gets **TRIM** when the *next* dollar is below break-even, and reallocation suggestions come with a start-at-10%-and-re-measure cap.
-
-A synthetic 52-week sample with known ground truth is built in (and in [`samples/`](samples/)) — the model recovers its true channel effects, carryover, and base share, which is also how changes to the fitting code get sanity-checked.
+This console is bottom-up: which ads and keywords to fix *inside* one platform. [**PULSE//MMM**](https://github.com/riz1k9/pulse-mmm) is the top-down half — a browser-based marketing-mix model that measures which *channels* deserve the budget and what the next dollar earns in each. Same philosophy: one file, no AI, transparent math.
 
 ## Privacy
 
