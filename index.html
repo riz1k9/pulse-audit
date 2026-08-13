@@ -1,0 +1,806 @@
+<title>PULSE//AUDIT — Ad Account Console</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#070a14; --panel:#10152b; --panel-2:#0c1122; --edge:#232c4e; --edge-hot:#00e5ff;
+    --ink:#e6ebfa; --muted:#8b93b0; --dim:#5d6788;
+    --cyan:#00e5ff; --magenta:#ff2ec4; --violet:#a78bfa;
+    --v-scale:#00a29b; --v-watch:#ad8c25; --v-pause:#7568d8; --v-kill:#cc2f74;
+    --v-keep:#55628a; --v-data:#3a4262;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;
+    background-image:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(0,229,255,.06),transparent),
+      radial-gradient(ellipse 60% 40% at 90% 110%,rgba(255,46,196,.05),transparent);}
+  main{max-width:1180px;margin:0 auto;padding:0 20px 80px}
+  a{color:var(--cyan)}
+
+  /* ---------- command bar ---------- */
+  header{border-bottom:1px solid var(--edge);padding:18px 20px;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;
+    max-width:1180px;margin:0 auto}
+  .logo{font-family:var(--mono);font-size:20px;font-weight:700;letter-spacing:.08em}
+  .logo .sl{color:var(--magenta)}
+  .logo .au{color:var(--cyan)}
+  .tagline{color:var(--muted);font-size:12.5px}
+  #readout{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
+  #readout b{color:var(--cyan);font-weight:600}
+  .hintbar{max-width:1180px;margin:16px auto 0;padding:0 20px}
+  .hintbar>div{border:1px solid var(--edge);border-left:3px solid var(--cyan);border-radius:4px;background:var(--panel-2);
+    padding:10px 14px;font-size:12.5px;color:var(--muted)}
+  .hintbar b{color:var(--ink);font-family:var(--mono);font-size:12px;letter-spacing:.06em}
+
+  /* ---------- panels ---------- */
+  section{margin-top:34px}
+  .sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+  .sec-num{font-family:var(--mono);font-size:11px;color:var(--magenta);letter-spacing:.15em}
+  .sec-title{font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+  .sec-sub{color:var(--muted);font-size:12.5px}
+  .panel{position:relative;background:var(--panel);border:1px solid var(--edge);border-radius:6px;padding:18px}
+  .panel::before,.panel::after{content:"";position:absolute;width:14px;height:14px;pointer-events:none}
+  .panel::before{top:-1px;left:-1px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan);border-top-left-radius:6px}
+  .panel::after{bottom:-1px;right:-1px;border-bottom:2px solid var(--magenta);border-right:2px solid var(--magenta);border-bottom-right-radius:6px}
+
+  /* ---------- platform picker & guides ---------- */
+  .platlabel{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--violet);margin-bottom:8px}
+  .platchips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .pchip{font-family:var(--mono);font-size:12px;letter-spacing:.06em;background:var(--panel-2);border:1px solid var(--edge);
+    color:var(--muted);border-radius:20px;padding:6px 16px;cursor:pointer}
+  .pchip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(0,229,255,.07)}
+  .guides{margin:0 0 14px}
+  .guides details{border:1px solid var(--edge);border-radius:4px;background:var(--panel-2);margin-bottom:6px;padding:8px 12px}
+  .guides summary{cursor:pointer;font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;color:var(--ink)}
+  .guides p{margin:8px 0 2px;color:var(--muted);font-size:12.5px}
+
+  /* ---------- data feed ---------- */
+  #drop{border:1.5px dashed var(--edge);border-radius:6px;padding:34px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+  #drop:hover,#drop.hot{border-color:var(--cyan);background:rgba(0,229,255,.04)}
+  #drop .big{font-family:var(--mono);letter-spacing:.05em;font-size:15px}
+  #drop .hint{color:var(--muted);font-size:12.5px;margin-top:6px}
+  #file{display:none}
+  .btn{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;background:transparent;
+    color:var(--cyan);border:1px solid var(--cyan);border-radius:4px;padding:8px 14px;cursor:pointer;transition:background .15s,box-shadow .15s}
+  .btn:hover{background:rgba(0,229,255,.1);box-shadow:0 0 12px rgba(0,229,255,.25)}
+  .btn:focus-visible,#drop:focus-visible,select:focus-visible,input:focus-visible,.chip:focus-visible,.pchip:focus-visible{outline:2px solid var(--magenta);outline-offset:2px}
+  .btn.ghost{color:var(--muted);border-color:var(--edge)}
+  .btn.ghost:hover{color:var(--ink);background:rgba(139,147,176,.08);box-shadow:none}
+  .btn.mag{color:var(--magenta);border-color:var(--magenta)}
+  .btn.mag:hover{background:rgba(255,46,196,.1);box-shadow:0 0 12px rgba(255,46,196,.25)}
+  .feedrow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;align-items:center}
+  #parsemsg{font-family:var(--mono);font-size:12px;color:var(--muted)}
+  #parsemsg.ok{color:var(--v-scale)}
+  #parsemsg.err{color:var(--v-kill)}
+  .notice{margin-top:10px;border:1px solid var(--v-watch);border-radius:4px;padding:8px 12px;font-size:12.5px;color:var(--v-watch);display:none}
+
+  #mapwrap{margin-top:16px;display:none}
+  .maphead{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--violet);margin-bottom:8px}
+  .mapgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+  .maprole label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+  select,input[type=number],input[type=text]{width:100%;background:var(--panel-2);color:var(--ink);border:1px solid var(--edge);
+    border-radius:4px;padding:7px 8px;font-family:var(--mono);font-size:12.5px}
+  select:hover,input:hover{border-color:var(--dim)}
+
+  /* ---------- goals & rules ---------- */
+  .goalgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+  .g label{display:block;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+  .g .exp{font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.35}
+  .modew{display:flex;border:1px solid var(--edge);border-radius:4px;overflow:hidden}
+  .modew button{flex:1;background:var(--panel-2);border:0;color:var(--muted);font-family:var(--mono);font-size:12px;
+    letter-spacing:.08em;padding:8px 0;cursor:pointer;text-transform:uppercase}
+  .modew button.on{background:rgba(0,229,255,.12);color:var(--cyan)}
+  details.rules{margin-top:16px}
+  details.rules>summary{cursor:pointer;font-family:var(--mono);font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--violet)}
+  details.rules>div{margin-top:14px}
+
+  /* ---------- tiles ---------- */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+  .tile{background:var(--panel);border:1px solid var(--edge);border-radius:6px;padding:14px 16px}
+  .tile .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .tile .v{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .tile .d{font-size:11.5px;color:var(--dim);margin-top:2px;font-family:var(--mono)}
+  .tile.hero{border-color:var(--magenta);box-shadow:0 0 18px rgba(255,46,196,.12) inset}
+  .tile.hero .v{color:var(--magenta)}
+  .good{color:var(--v-scale)} .bad{color:var(--v-kill)} .warn{color:var(--v-watch)}
+
+  /* ---------- charts ---------- */
+  .chartwrap{margin-top:14px}
+  .leg{display:flex;gap:14px;flex-wrap:wrap;margin:2px 0 12px}
+  .leg span{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--muted)}
+  .leg i{width:10px;height:10px;border-radius:2px;display:inline-block}
+  .stack{display:flex;height:22px;border-radius:4px;overflow:hidden;gap:2px;background:var(--bg)}
+  .stack div{min-width:3px}
+  .barrow{display:grid;grid-template-columns:190px 1fr 90px;align-items:center;gap:10px;padding:3px 0}
+  .barrow .nm{font-family:var(--mono);font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:right}
+  .barrow .tr{height:14px;position:relative}
+  .barrow .bar{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0;min-width:2px;cursor:default}
+  .barrow .vl{font-family:var(--mono);font-size:11.5px;color:var(--ink);font-variant-numeric:tabular-nums}
+  #tip{position:fixed;z-index:50;background:#060912;border:1px solid var(--edge-hot);border-radius:5px;padding:9px 11px;
+    font-family:var(--mono);font-size:11.5px;pointer-events:none;display:none;max-width:280px;box-shadow:0 4px 20px rgba(0,0,0,.6)}
+  #tip .t{color:var(--cyan);margin-bottom:4px}
+  #tip .r{display:flex;justify-content:space-between;gap:14px;color:var(--muted)}
+  #tip .r b{color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+
+  /* ---------- queue ---------- */
+  .qbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.06em;background:var(--panel-2);border:1px solid var(--edge);
+    color:var(--muted);border-radius:20px;padding:4px 12px;cursor:pointer}
+  .chip.on{border-color:var(--cyan);color:var(--cyan)}
+  .qbar .sp{flex:1}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+    text-align:left;padding:8px 10px;border-bottom:1px solid var(--edge);white-space:nowrap;user-select:none}
+  th[data-k]{cursor:pointer}
+  th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+  td{padding:9px 10px;border-bottom:1px solid rgba(35,44,78,.5);vertical-align:top;font-family:var(--mono)}
+  td .ent{color:var(--ink)} td .cmp{color:var(--dim);font-size:11px;margin-top:1px}
+  .vchip{display:inline-block;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;
+    padding:3px 9px;border-radius:3px;color:#fff}
+  .conf{font-size:10px;color:var(--dim);letter-spacing:.08em;margin-top:3px}
+  td.why{font-family:var(--sans);color:var(--muted);font-size:12.5px;max-width:340px}
+  td.why .act{color:var(--ink);font-weight:600}
+  td.why details{margin-top:6px}
+  td.why summary{cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--violet)}
+  td.why pre{font-family:var(--mono);font-size:11px;color:var(--dim);background:var(--panel-2);border:1px solid var(--edge);
+    border-radius:4px;padding:8px 10px;margin:6px 0 0;white-space:pre-wrap;overflow-x:auto}
+  .tblwrap{overflow-x:auto}
+  .empty{color:var(--dim);font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;text-align:center;padding:30px 0}
+  .capnote{color:var(--dim);font-family:var(--mono);font-size:12px;text-align:center;padding:14px 0 4px}
+  #realloc{margin-top:14px;font-size:12.5px;color:var(--muted)}
+  #realloc .rrow{padding:6px 0;border-bottom:1px solid rgba(35,44,78,.5);display:flex;gap:10px;justify-content:space-between;font-family:var(--mono);font-size:12px}
+  #realloc .rrow b{color:var(--v-scale);font-weight:600}
+  .footnote{margin-top:26px;color:var(--dim);font-size:11.5px;font-family:var(--mono);letter-spacing:.04em}
+
+  @media (max-width:640px){
+    .barrow{grid-template-columns:110px 1fr 70px}
+    header{padding:14px 16px}
+    #readout{margin-left:0}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .tile.hero{animation:pulse 3s ease-in-out infinite}
+    @keyframes pulse{0%,100%{box-shadow:0 0 18px rgba(255,46,196,.10) inset}50%{box-shadow:0 0 26px rgba(255,46,196,.22) inset}}
+  }
+</style>
+
+<header>
+  <div class="logo"><span class="sl">PULSE</span>//<span class="au">AUDIT</span></div>
+  <div class="tagline">offline ad-account diagnostics — deterministic rules, no AI, your data never leaves this page</div>
+  <div id="readout">standby</div>
+</header>
+<div class="hintbar"><div><b>DROP A CSV → SET ONE TARGET → GET A RANKED FIX LIST.</b>
+  You get: the wasted-spend total, a scale / pause / kill verdict for every ad or keyword (with the math shown),
+  budget-reallocation suggestions, and an exportable action list. Works with whichever platforms you use — pick yours below.</div></div>
+
+<main>
+  <!-- 01 DATA FEED -->
+  <section id="sec-data">
+    <div class="sec-head"><span class="sec-num">01</span><span class="sec-title">Data feed</span>
+      <span class="sec-sub">one CSV export from your ads manager is all it needs</span></div>
+    <div class="panel">
+      <div class="platlabel">Where do you run ads? — pick yours to see export walkthroughs (detection handles every format automatically)</div>
+      <div class="platchips" id="platchips"></div>
+      <div class="guides" id="guides"></div>
+      <div id="drop" tabindex="0" role="button" aria-label="Upload CSV">
+        <div class="big">DROP CSV HERE — or click to browse</div>
+        <div class="hint">Parsed locally in your browser — nothing is uploaded. Any level works: campaign, ad set, ad, keyword, or search term. A date column unlocks trend detection.</div>
+      </div>
+      <input type="file" id="file" accept=".csv,.tsv,text/csv,text/tab-separated-values">
+      <div class="feedrow">
+        <button class="btn ghost" id="loadsample">Try it: sample Meta account</button>
+        <button class="btn ghost" id="loadsample2">Try it: sample Google keywords</button>
+        <span id="parsemsg"></span>
+      </div>
+      <div class="notice" id="feednotice"></div>
+      <div id="mapwrap">
+        <div class="maphead">Column mapping — auto-detected, correct anything that's wrong</div>
+        <div class="mapgrid" id="mapgrid"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 TARGETS & RULES -->
+  <section id="sec-goals">
+    <div class="sec-head"><span class="sec-num">02</span><span class="sec-title">Targets &amp; rules</span>
+      <span class="sec-sub">set one number and you're done — every change re-runs the audit instantly · saved on this device</span></div>
+    <div class="panel">
+      <div class="goalgrid">
+        <div class="g"><label>Primary KPI</label>
+          <div class="modew"><button id="mode-cpa" class="on">CPA</button><button id="mode-roas">ROAS</button></div>
+          <div class="exp">CPA if you buy leads/installs, ROAS if you sell online (needs a revenue column in the export).</div></div>
+        <div class="g"><label>Target CPA</label><input type="number" id="cfg-targetCPA" min="0" step="1">
+          <div class="exp">The most you can pay per conversion and still make money.</div></div>
+        <div class="g"><label>Target ROAS</label><input type="number" id="cfg-targetROAS" min="0" step="0.1">
+          <div class="exp">Revenue ÷ spend you need to break even + margin.</div></div>
+        <div class="g"><label>Currency symbol</label><input type="text" id="cfg-cur" maxlength="4"></div>
+      </div>
+      <div class="notice" id="kpinote"></div>
+      <details class="rules">
+        <summary>▸ Advanced: rule thresholds (sensible defaults — you don't have to touch these)</summary>
+        <div class="goalgrid">
+          <div class="g"><label>Judgment floor (spend)</label><input type="number" id="cfg-minSpend" min="0" step="1">
+            <div class="exp">Below this spend, no verdict — flagged LOW DATA instead.</div></div>
+          <div class="g"><label>Kill multiple</label><input type="number" id="cfg-killMult" min="1" step="0.1">
+            <div class="exp">Zero conversions after this × target CPA of spend → KILL.</div></div>
+          <div class="g"><label>CPA tolerance</label><input type="number" id="cfg-tol" min="1" step="0.05">
+            <div class="exp">Ceiling = target × this. Above ceiling → PAUSE; between target and ceiling → WATCH.</div></div>
+          <div class="g"><label>Scale threshold</label><input type="number" id="cfg-scaleThr" min="0.1" max="1" step="0.05">
+            <div class="exp">CPA ≤ this × target (with volume) → SCALE.</div></div>
+          <div class="g"><label>Min conv. to scale</label><input type="number" id="cfg-minConvScale" min="1" step="1">
+            <div class="exp">Don't scale on luck — require this many conversions first.</div></div>
+          <div class="g"><label>Frequency cap</label><input type="number" id="cfg-freqCap" min="1" step="0.1">
+            <div class="exp">Above this average frequency → creative-fatigue flag (Meta/TikTok exports).</div></div>
+          <div class="g"><label>Low-CTR ratio</label><input type="number" id="cfg-ctrRatio" min="0.1" max="1" step="0.05">
+            <div class="exp">CTR below this × your account's median → weak-creative flag.</div></div>
+          <div class="g"><label>Min impressions</label><input type="number" id="cfg-minImpr" min="0" step="100">
+            <div class="exp">Needed before CTR judgments count.</div></div>
+          <div class="g"><label>Scale step %</label><input type="number" id="cfg-scaleStep" min="5" max="100" step="5">
+            <div class="exp">Suggested budget increase per scaling round (20% keeps learning stable).</div></div>
+          <div class="g"><label>Trend alarm %</label><input type="number" id="cfg-trendPct" min="5" max="100" step="5">
+            <div class="exp">Recent-half CPA up (or CTR down) by this % → deterioration flag. Needs a date column.</div></div>
+        </div>
+        <div class="feedrow"><button class="btn ghost" id="resetcfg">Reset all settings to defaults</button></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- 03 DIAGNOSIS -->
+  <section id="sec-diag">
+    <div class="sec-head"><span class="sec-num">03</span><span class="sec-title">Diagnosis</span></div>
+    <div id="diag-empty" class="panel"><div class="empty">— awaiting data feed — load a sample above to see what this looks like —</div></div>
+    <div id="diag" style="display:none">
+      <div class="tiles" id="tiles"></div>
+      <div class="panel chartwrap">
+        <div class="maphead">Spend by verdict</div>
+        <div class="leg" id="leg1"></div>
+        <div class="stack" id="stack" role="img" aria-label="Spend split by verdict"></div>
+        <div class="maphead" style="margin-top:22px">Top spenders — where the money actually goes</div>
+        <div id="bars"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 ACTION QUEUE -->
+  <section id="sec-queue">
+    <div class="sec-head"><span class="sec-num">04</span><span class="sec-title">Action queue</span>
+      <span class="sec-sub">worst first · click a column to sort · every verdict shows its math</span></div>
+    <div id="queue-empty" class="panel"><div class="empty">— awaiting data feed —</div></div>
+    <div class="panel" id="queuepanel" style="display:none">
+      <div class="qbar" id="chips"></div>
+      <div class="tblwrap"><table id="qtable"></table></div>
+      <div id="capwrap"></div>
+      <div id="realloc"></div>
+      <div class="feedrow" style="margin-top:16px">
+        <button class="btn mag" id="exportcsv">Export action queue (CSV)</button>
+        <button class="btn ghost" id="copysum">Copy summary for client/Slack</button>
+        <span id="copymsg" style="font-family:var(--mono);font-size:11.5px;color:var(--v-scale)"></span>
+      </div>
+    </div>
+  </section>
+
+  <div class="footnote">PULSE//AUDIT runs entirely in this page — no uploads, no accounts, no AI. Verdicts are deterministic
+    functions of your numbers and the thresholds above. Open source (MIT):
+    <a href="https://github.com/riz1k9/pulse-audit" rel="noopener">github.com/riz1k9/pulse-audit</a></div>
+</main>
+<div id="tip"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+
+/* ============ config ============ */
+const DEFAULTS={mode:"cpa",targetCPA:40,targetROAS:2,cur:"$",minSpend:40,killMult:2,tol:1.3,
+  scaleThr:0.85,minConvScale:3,freqCap:3.5,ctrRatio:0.5,minImpr:1000,scaleStep:20,trendPct:25,platforms:[]};
+let cfg=loadCfg();
+function loadCfg(){try{return{...DEFAULTS,...JSON.parse(localStorage.getItem("pulseaudit.cfg")||"{}")}}catch(e){return{...DEFAULTS}}}
+function saveCfg(){try{localStorage.setItem("pulseaudit.cfg",JSON.stringify(cfg))}catch(e){}}
+
+const VERDICTS={
+  KILL:{hex:"#cc2f74",rank:0},
+  PAUSE:{hex:"#7568d8",rank:1},
+  WATCH:{hex:"#ad8c25",rank:2},
+  SCALE:{hex:"#00a29b",rank:3},
+  KEEP:{hex:"#55628a",rank:4},
+  "LOW DATA":{hex:"#3a4262",rank:5}
+};
+
+/* ============ platforms ============ */
+const PLATFORMS={
+  meta:{label:"Meta (FB/IG)",guide:"Ads Manager → set your date range (top right) → <b>Reports → Export table data → .csv</b>. Tip: use Columns → Customize to include <b>Frequency</b> and <b>Purchases conversion value</b> — they unlock fatigue and ROAS checks. Then drop the file above."},
+  google:{label:"Google Ads",guide:"Google Ads → open <b>Campaigns, Ad groups, Ads, Keywords or Search terms</b> → set the date range → click the <b>download icon → .csv</b>. Tip: add the <b>Conv. value</b> column (Columns → Modify) if you sell online. Then drop the file above."},
+  tiktok:{label:"TikTok",guide:"TikTok Ads Manager → Campaign or Ad level → set dates → <b>Export → CSV</b>. Include <b>Conversions</b> and payment/conversion-value columns if available. Then drop the file above."},
+  linkedin:{label:"LinkedIn",guide:"Campaign Manager → <b>Analytics → Export → Ad / Campaign performance (CSV)</b>. LinkedIn exports usually have <b>no revenue column</b> — keep the tool in CPA mode. Then drop the file above."},
+  other:{label:"Other / agency report",guide:"Any CSV works if it has a name column and a spend column. Columns for impressions, clicks, conversions, revenue, frequency and date each unlock more checks — map them manually below if auto-detection misses."}
+};
+function renderPlatforms(){
+  $("#platchips").innerHTML=Object.entries(PLATFORMS).map(([k,p])=>
+    `<button class="pchip${cfg.platforms.includes(k)?" on":""}" data-p="${k}">${p.label}</button>`).join("");
+  $$("#platchips .pchip").forEach(b=>b.onclick=()=>{
+    const k=b.dataset.p;
+    cfg.platforms=cfg.platforms.includes(k)?cfg.platforms.filter(x=>x!==k):[...cfg.platforms,k];
+    saveCfg();renderPlatforms();});
+  $("#guides").innerHTML=cfg.platforms.map(k=>
+    `<details><summary>▸ How to export your CSV from ${PLATFORMS[k].label}</summary><p>${PLATFORMS[k].guide}</p></details>`).join("");
+}
+renderPlatforms();
+
+/* ============ csv parsing ============ */
+async function readAny(f){
+  const buf=new Uint8Array(await f.arrayBuffer());
+  let enc="utf-8";
+  if(buf[0]===0xFF&&buf[1]===0xFE)enc="utf-16le";
+  else if(buf[0]===0xFE&&buf[1]===0xFF)enc="utf-16be";
+  else{let nul=0;for(let i=0;i<Math.min(buf.length,2000);i++)if(buf[i]===0)nul++;
+    if(nul>50)enc="utf-16le";}
+  return new TextDecoder(enc).decode(buf);
+}
+function parseCSV(text){
+  text=text.replace(/^﻿/,"");
+  // delimiter sniff over the first 5 lines, outside quotes
+  const head=text.split(/\r?\n/).slice(0,5).join("\n");
+  const counts={",":0,";":0,"\t":0}; let q=false;
+  for(const ch of head){ if(ch==='"')q=!q; else if(!q&&ch in counts)counts[ch]++; }
+  const delim=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+  const rows=[];let row=[],cell="",inq=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(inq){
+      if(ch==='"'){ if(text[i+1]==='"'){cell+='"';i++;} else inq=false; }
+      else cell+=ch;
+    }else{
+      if(ch==='"')inq=true;
+      else if(ch===delim){row.push(cell);cell="";}
+      else if(ch==="\n"||ch==="\r"){ if(ch==="\r"&&text[i+1]==="\n")i++;
+        row.push(cell);cell=""; if(row.some(c=>c.trim()!==""))rows.push(row); row=[]; }
+      else cell+=ch;
+    }
+  }
+  row.push(cell); if(row.some(c=>c.trim()!==""))rows.push(row);
+  return {rows,delim};
+}
+const norm=h=>h.toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+const SYN={
+  spend:["amount spent usd","amount spent","spend","cost","total spent","total cost","amount spent inr","amount spent gbp","amount spent eur","cost usd"],
+  impressions:["impressions","impr","impressions gross"],
+  clicks:["link clicks","unique link clicks","clicks destination","clicks","interactions"],
+  conversions:["results","purchases","website purchases","conversions","total conversions","conv","leads","website leads","external website conversions","actions","payment completed"],
+  revenue:["purchases conversion value","website purchases conversion value","conv value","total conv value","conversion value","total conversion value","revenue","purchase value","all conv value","payment amount","sales"],
+  frequency:["frequency","avg impr freq per user","avg frequency"],
+  date:["day","date","reporting starts","date start","week","month starts","month","by day"]
+};
+const NAME_PRIORITY=["search term","keyword","search keyword","ad name","creative name","asset","product title","item id","ad set name","adset name","ad group","ad group name","asset group","campaign name","campaign"];
+const CAMP_SYN=["campaign name","campaign"];
+
+function findHeaderRow(rows){
+  const all=Object.values(SYN).flat().concat(NAME_PRIORITY);
+  for(let i=0;i<Math.min(rows.length,8);i++){
+    const hits=rows[i].filter(c=>all.some(s=>{const n=norm(c);return n===s||n.startsWith(s)})).length;
+    if(hits>=3)return i;
+  }
+  return 0;
+}
+function guessMapping(headers){
+  const m={}; const nh=headers.map(norm);
+  const pick=list=>{ for(const s of list){ const i=nh.findIndex(h=>h===s); if(i>=0)return i; }
+    for(const s of list){ const i=nh.findIndex(h=>h.startsWith(s)||h.includes(s)); if(i>=0)return i; } return -1; };
+  for(const[role,list]of Object.entries(SYN)) m[role]=pick(list);
+  m.name=pick(NAME_PRIORITY);
+  m.campaign=pick(CAMP_SYN);
+  if(m.campaign===m.name)m.campaign=-1;
+  return m;
+}
+function parseNum(s){
+  if(s==null)return 0; s=String(s).trim();
+  if(!s||s==="--"||s==="—")return 0;
+  if(state.commaDec)s=s.replace(/\./g,"").replace(/,/g,".");
+  const v=parseFloat(s.replace(/[^0-9.\-]/g,""));
+  return isFinite(v)?v:0;
+}
+
+/* ============ state ============ */
+let state={rows:null,headers:null,mapping:null,entities:null,recs:null,acct:null,filter:"ALL",
+  sortKey:"rank",sortDir:1,sourceName:"",commaDec:false,showAll:false};
+
+/* ============ entity build ============ */
+function buildEntities(){
+  const{rows,mapping:m}=state; const ents=new Map();
+  for(const r of rows){
+    const name=(m.name>=0?r[m.name]||"":"").trim();
+    if(!name||/^total\b/i.test(name)||/^all campaigns/i.test(name))continue;
+    const camp=m.campaign>=0?(r[m.campaign]||"").trim():"";
+    const key=name+"||"+camp;
+    if(!ents.has(key))ents.set(key,{name,camp,spend:0,impr:0,clicks:0,conv:0,rev:0,freqW:0,freqImp:0,series:[]});
+    const e=ents.get(key);
+    const spend=m.spend>=0?parseNum(r[m.spend]):0, impr=m.impressions>=0?parseNum(r[m.impressions]):0,
+      clicks=m.clicks>=0?parseNum(r[m.clicks]):0, conv=m.conversions>=0?parseNum(r[m.conversions]):0,
+      rev=m.revenue>=0?parseNum(r[m.revenue]):0;
+    e.spend+=spend;e.impr+=impr;e.clicks+=clicks;e.conv+=conv;e.rev+=rev;
+    if(m.frequency>=0){const f=parseNum(r[m.frequency]); if(f>0&&impr>0){e.freqW+=f*impr;e.freqImp+=impr;}}
+    if(m.date>=0){const d=(r[m.date]||"").trim(); if(d){const t=Date.parse(d);e.series.push({d,t:isFinite(t)?t:null,spend,impr,clicks,conv,rev});}}
+  }
+  const list=[...ents.values()];
+  for(const e of list){
+    e.freq=e.freqImp>0?e.freqW/e.freqImp:null;
+    e.cpa=e.conv>0?e.spend/e.conv:null;
+    e.roas=e.spend>0?e.rev/e.spend:null;
+    e.ctr=e.impr>0?e.clicks/e.impr:null;
+    e.cvr=e.clicks>0?e.conv/e.clicks:null;
+    e.series.sort((a,b)=>a.t!=null&&b.t!=null?a.t-b.t:(a.d<b.d?-1:1));
+  }
+  return list;
+}
+function accountStats(list){
+  const t={spend:0,impr:0,clicks:0,conv:0,rev:0};
+  for(const e of list){t.spend+=e.spend;t.impr+=e.impr;t.clicks+=e.clicks;t.conv+=e.conv;t.rev+=e.rev;}
+  const ctrs=list.filter(e=>e.impr>=Math.max(500,cfg.minImpr/2)&&e.ctr!=null).map(e=>e.ctr).sort((a,b)=>a-b);
+  t.medCTR=ctrs.length?ctrs[Math.floor(ctrs.length/2)]:null;
+  t.cpa=t.conv>0?t.spend/t.conv:null; t.roas=t.spend>0?t.rev/t.spend:null;
+  t.ctr=t.impr>0?t.clicks/t.impr:null;
+  return t;
+}
+
+/* ============ the judgment engine ============ */
+function money(v){return cfg.cur+(Math.abs(v)>=1000?v.toLocaleString(undefined,{maximumFractionDigits:0}):v.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}))}
+function pct(v){return(v*100).toFixed(v*100<10?2:1)+"%"}
+
+function judge(e,acct){
+  const M=[],R=[]; let verdict="KEEP",action="";
+  const roasMode=cfg.mode==="roas";
+  const hasConv=state.mapping.conversions>=0;
+  const hasRev=state.mapping.revenue>=0;
+  const conf=e.conv>=10||e.clicks>=500?"HIGH":e.conv>=3||e.clicks>=100?"MED":"LOW";
+
+  if(e.spend<cfg.minSpend){
+    verdict="LOW DATA";
+    R.push(`Only ${money(e.spend)} spent — below the ${money(cfg.minSpend)} judgment floor.`);
+    M.push(`spend ${money(e.spend)} < judgment floor ${money(cfg.minSpend)} → no verdict`);
+    action="Let it spend or cut it manually — not enough signal either way.";
+    return fin();
+  }
+
+  if(!roasMode&&!hasConv){
+    verdict="WATCH";
+    R.push("This export has no conversions column, so efficiency can't be judged — only creative signals below.");
+    M.push("conversions column: not mapped → CPA rules skipped");
+    action="Re-export with a conversions/results column for full verdicts.";
+  }else if(!roasMode){
+    const target=cfg.targetCPA, ceiling=target*cfg.tol, killAt=target*cfg.killMult;
+    if(e.conv===0){
+      M.push(`conversions = 0; spend ${money(e.spend)}; kill line = target CPA ${money(target)} × ${cfg.killMult} = ${money(killAt)}`);
+      if(e.spend>=killAt){verdict="KILL";R.push(`${money(e.spend)} spent with zero conversions — past the ${money(killAt)} kill line.`);action="Turn it off today. This is pure burn.";}
+      else{verdict="PAUSE";R.push(`${money(e.spend)} spent, zero conversions — over the judgment floor but not yet at the kill line.`);action="Pause; re-enable only with a new creative or audience.";}
+    }else{
+      M.push(`CPA = spend ÷ conversions = ${money(e.spend)} ÷ ${e.conv} = ${money(e.cpa)}`);
+      M.push(`ceiling = target ${money(target)} × tolerance ${cfg.tol} = ${money(ceiling)}`);
+      if(e.cpa>ceiling){
+        if(e.conv>=cfg.minConvScale){verdict="PAUSE";R.push(`CPA ${money(e.cpa)} is ${Math.round(e.cpa/target*100)}% of target with real volume (${e.conv} conv).`);action=`Pause, or rebuild targeting/landing page — every conversion overpays by ${money(e.cpa-target)}.`;}
+        else{verdict="WATCH";R.push(`CPA ${money(e.cpa)} is above ceiling but only ${e.conv} conversions — could be noise.`);action="Give it one more spend cycle, then apply the pause rule.";}
+      }else if(e.cpa>target){
+        verdict="WATCH";R.push(`CPA ${money(e.cpa)} sits in the tolerance band (${money(target)}–${money(ceiling)}).`);
+        action="Trim worst placements/hours or test a cheaper hook to pull CPA under target.";
+      }else if(e.cpa<=target*cfg.scaleThr&&e.conv>=cfg.minConvScale){
+        verdict="SCALE";
+        M.push(`scale line = target × ${cfg.scaleThr} = ${money(target*cfg.scaleThr)}; conversions ${e.conv} ≥ ${cfg.minConvScale}`);
+        R.push(`CPA ${money(e.cpa)} beats target by ${Math.round((1-e.cpa/target)*100)}% on ${e.conv} conversions.`);
+        action=`Raise budget +${cfg.scaleStep}% (≈ +${money(e.spend*cfg.scaleStep/100)}); re-check after the learning reset settles.`;
+      }else{
+        R.push(`CPA ${money(e.cpa)} is under target ${money(target)} — earning its budget.`);
+        action="Leave it alone.";
+      }
+    }
+  }else{
+    const target=cfg.targetROAS, floor=target/cfg.tol;
+    if(!hasRev){verdict="WATCH";R.push("ROAS mode needs a revenue / conversion-value column — none is mapped.");action="Map a revenue column in section 01, or switch to CPA mode.";return fin();}
+    M.push(`ROAS = revenue ÷ spend = ${money(e.rev)} ÷ ${money(e.spend)} = ${(e.roas||0).toFixed(2)}`);
+    M.push(`floor = target ${target} ÷ tolerance ${cfg.tol} = ${floor.toFixed(2)}`);
+    if(e.rev===0){
+      const killAt=cfg.minSpend*cfg.killMult;
+      M.push(`revenue = 0; kill line = floor ${money(cfg.minSpend)} × ${cfg.killMult} = ${money(killAt)}`);
+      if(e.spend>=killAt){verdict="KILL";R.push(`${money(e.spend)} spent with zero revenue.`);action="Turn it off today.";}
+      else{verdict="PAUSE";R.push(`${money(e.spend)} spent, zero revenue.`);action="Pause; relaunch only with a change.";}
+    }else if(e.roas<floor){
+      if(e.conv>=cfg.minConvScale){verdict="PAUSE";R.push(`ROAS ${e.roas.toFixed(2)} is below the ${floor.toFixed(2)} floor with ${e.conv} purchases — losing money at margin.`);action=`Pause or cut ${money(Math.max(0,e.spend-e.rev/target))} of its spend.`;}
+      else{verdict="WATCH";R.push(`ROAS ${e.roas.toFixed(2)} below floor but thin volume (${e.conv}).`);action="One more cycle, then pause rule applies.";}
+    }else if(e.roas<target){
+      verdict="WATCH";R.push(`ROAS ${e.roas.toFixed(2)} between floor ${floor.toFixed(2)} and target ${target}.`);
+      action="Push AOV (bundles) or cut weakest products/placements to clear target.";
+    }else if(e.roas>=target/cfg.scaleThr&&e.conv>=cfg.minConvScale){
+      verdict="SCALE";
+      M.push(`scale line = target ÷ ${cfg.scaleThr} = ${(target/cfg.scaleThr).toFixed(2)}; purchases ${e.conv} ≥ ${cfg.minConvScale}`);
+      R.push(`ROAS ${e.roas.toFixed(2)} clears target by ${Math.round((e.roas/target-1)*100)}% on ${e.conv} purchases.`);
+      action=`Raise budget +${cfg.scaleStep}% (≈ +${money(e.spend*cfg.scaleStep/100)}).`;
+    }else{R.push(`ROAS ${e.roas.toFixed(2)} ≥ target ${target} — profitable.`);action="Leave it alone.";}
+  }
+
+  // overlays — fatigue, weak creative, trend
+  if(e.freq!=null&&e.freq>=cfg.freqCap&&verdict!=="KILL"){
+    M.push(`frequency ${e.freq.toFixed(1)} ≥ cap ${cfg.freqCap}`);
+    R.push(`Audience is seeing this ${e.freq.toFixed(1)}× — fatigue territory.`);
+    if(verdict==="KEEP"||verdict==="SCALE")action+=" Queue a creative refresh before fatigue taxes CPA.";
+    if(verdict==="KEEP")verdict="WATCH";
+  }
+  if(acct.medCTR&&e.impr>=cfg.minImpr&&e.ctr!=null&&e.ctr<acct.medCTR*cfg.ctrRatio&&verdict!=="KILL"){
+    M.push(`CTR ${pct(e.ctr)} < ${cfg.ctrRatio}× account median ${pct(acct.medCTR)}`);
+    R.push(`CTR ${pct(e.ctr)} is under half the account median — the creative isn't stopping anyone.`);
+    if(verdict==="KEEP")verdict="WATCH";
+    if(!/creative/i.test(action))action+=" Test a new hook/thumbnail.";
+  }
+  const tr=trend(e);
+  if(tr){
+    if(tr.cpaUp!=null){M.push(`CPA first half ${money(tr.cpa1)} → second half ${money(tr.cpa2)} (+${Math.round(tr.cpaUp*100)}%)`);
+      R.push(`CPA is deteriorating: ${money(tr.cpa1)} → ${money(tr.cpa2)} between halves of the date range.`);
+      if(verdict==="SCALE"||verdict==="KEEP"){verdict="WATCH";action="Hold budget flat until the CPA slide stops.";}}
+    if(tr.ctrDown!=null){M.push(`CTR first half ${pct(tr.ctr1)} → ${pct(tr.ctr2)} (−${Math.round(tr.ctrDown*100)}%)`);
+      R.push("CTR is decaying over the period — classic creative burnout curve.");
+      if(!/creative|hook/i.test(action))action+=" Rotate in fresh creative.";}
+  }
+  return fin();
+
+  function fin(){return{e,verdict,conf,reasons:R,math:M,action:action.trim(),rank:VERDICTS[verdict].rank};}
+}
+function trend(e){
+  if(e.series.length<2)return null;
+  const dates=[...new Set(e.series.map(s=>s.d))]; if(dates.length<2)return null;
+  const firstHalf=new Set(dates.slice(0,Math.floor(dates.length/2)||1));
+  const h1={spend:0,conv:0,clicks:0,impr:0},h2={spend:0,conv:0,clicks:0,impr:0};
+  for(const s of e.series){const h=firstHalf.has(s.d)?h1:h2;h.spend+=s.spend;h.conv+=s.conv;h.clicks+=s.clicks;h.impr+=s.impr;}
+  const out={};
+  if(h1.conv>0&&h2.conv>0){const c1=h1.spend/h1.conv,c2=h2.spend/h2.conv;
+    if(c2>c1*(1+cfg.trendPct/100)){out.cpaUp=(c2-c1)/c1;out.cpa1=c1;out.cpa2=c2;}}
+  if(h1.impr>500&&h2.impr>500){const t1=h1.clicks/h1.impr,t2=h2.clicks/h2.impr;
+    if(t2<t1*(1-cfg.trendPct/100)){out.ctrDown=(t1-t2)/t1;out.ctr1=t1;out.ctr2=t2;}}
+  return out.cpaUp!=null||out.ctrDown!=null?out:null;
+}
+
+/* ============ run ============ */
+function runAudit(){
+  if(!state.rows)return;
+  state.entities=buildEntities();
+  if(!state.entities.length){msg("No usable rows found — check the Entity name column mapping below.","err");return;}
+  state.acct=accountStats(state.entities);
+  state.recs=state.entities.map(e=>judge(e,state.acct)).sort((a,b)=>a.rank-b.rank||b.e.spend-a.e.spend);
+  const counts={};for(const r of state.recs)counts[r.verdict]=1;
+  if(state.filter!=="ALL"&&!counts[state.filter])state.filter="ALL";
+  renderAll();
+}
+
+/* ============ rendering ============ */
+function renderAll(){renderReadout();renderNotices();renderTiles();renderCharts();renderQueue();}
+function renderReadout(){
+  $("#readout").innerHTML=`feed: <b>${esc(state.sourceName)}</b> · entities: <b>${state.entities.length}</b> · rows: <b>${state.rows.length}</b>`;
+}
+function renderNotices(){
+  const hasConv=state.mapping.conversions>=0, hasRev=state.mapping.revenue>=0;
+  const feedN=$("#feednotice"), kpiN=$("#kpinote");
+  let f="";
+  if(!hasConv)f="⚠ No conversions column detected — efficiency verdicts are limited to creative signals. If your export has one, map it below.";
+  feedN.textContent=f; feedN.style.display=f?"block":"none";
+  let k="";
+  if(cfg.mode==="roas"&&!hasRev)k="⚠ ROAS mode needs a revenue / conversion-value column and this export has none — switch to CPA, or re-export with conversion value included.";
+  kpiN.textContent=k; kpiN.style.display=k?"block":"none";
+}
+function wasted(r){
+  const e=r.e;
+  if(r.verdict!=="KILL"&&r.verdict!=="PAUSE")return 0;
+  if(cfg.mode==="roas")return Math.max(0,e.spend-e.rev/cfg.targetROAS);
+  return e.conv===0?e.spend:Math.max(0,e.spend-e.conv*cfg.targetCPA);
+}
+function renderTiles(){
+  $("#diag-empty").style.display="none";$("#diag").style.display="block";
+  const a=state.acct,recs=state.recs;
+  const waste=recs.reduce((s,r)=>s+wasted(r),0);
+  const scaleN=recs.filter(r=>r.verdict==="SCALE").length;
+  const kpi=cfg.mode==="roas"
+    ?{k:"Blended ROAS",v:a.roas!=null?a.roas.toFixed(2):"—",d:`target ${cfg.targetROAS}`,cls:a.roas!=null&&a.roas>=cfg.targetROAS?"good":"bad"}
+    :{k:"Blended CPA",v:a.cpa!=null?money(a.cpa):"—",d:`target ${money(cfg.targetCPA)}`,cls:a.cpa!=null&&a.cpa<=cfg.targetCPA?"good":a.cpa!=null?"bad":""};
+  const tiles=[
+    {k:"Total spend",v:money(a.spend),d:`${a.conv.toLocaleString()} conversions`},
+    {k:kpi.k,v:`<span class="${kpi.cls}">${kpi.v}</span>`,d:kpi.d},
+    {k:"Wasted spend identified",v:money(waste),d:"recoverable from KILL + PAUSE",hero:waste>0},
+    {k:"Account CTR",v:a.ctr!=null?pct(a.ctr):"—",d:a.medCTR?`median entity ${pct(a.medCTR)}`:""},
+    {k:"Scale candidates",v:String(scaleN),d:scaleN?`+${cfg.scaleStep}% budget each`:"none cleared the bar"},
+  ];
+  $("#tiles").innerHTML=tiles.map(t=>`<div class="tile${t.hero?" hero":""}"><div class="k">${t.k}</div><div class="v">${t.v}</div><div class="d">${t.d||""}</div></div>`).join("");
+}
+function renderCharts(){
+  const recs=state.recs,total=state.acct.spend||1;
+  const order=["KILL","PAUSE","WATCH","SCALE","KEEP","LOW DATA"];
+  const byV=Object.fromEntries(order.map(v=>[v,{spend:0,n:0}]));
+  for(const r of recs){byV[r.verdict].spend+=r.e.spend;byV[r.verdict].n++;}
+  $("#leg1").innerHTML=order.filter(v=>byV[v].n).map(v=>
+    `<span><i style="background:${VERDICTS[v].hex}"></i>${v} · ${byV[v].n} · ${money(byV[v].spend)}</span>`).join("");
+  $("#stack").innerHTML=order.filter(v=>byV[v].spend>0).map(v=>
+    `<div style="flex:${byV[v].spend/total};background:${VERDICTS[v].hex}" data-tip="${v}|${money(byV[v].spend)} (${Math.round(byV[v].spend/total*100)}%)|${byV[v].n} entities"></div>`).join("");
+  const top=[...recs].sort((a,b)=>b.e.spend-a.e.spend).slice(0,12);
+  const max=top.length?top[0].e.spend:1;
+  $("#bars").innerHTML=top.map(r=>{
+    const e=r.e,kv=cfg.mode==="roas"?`ROAS ${e.roas!=null?e.roas.toFixed(2):"—"}`:`CPA ${e.cpa!=null?money(e.cpa):"—"}`;
+    return`<div class="barrow"><div class="nm" title="${esc(e.name)}">${esc(e.name)}</div>
+      <div class="tr"><div class="bar" style="width:${Math.max(1.5,e.spend/max*100)}%;background:${VERDICTS[r.verdict].hex}"
+        data-tip="${esc(e.name)}|spend ${money(e.spend)} · ${kv}|${r.verdict} · conv ${e.conv} · CTR ${e.ctr!=null?pct(e.ctr):"—"}"></div></div>
+      <div class="vl">${money(e.spend)}</div></div>`;}).join("");
+  bindTips();
+}
+function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;")}
+function bindTips(){
+  const tip=$("#tip");
+  $$("[data-tip]").forEach(el=>{
+    el.onmouseenter=()=>{const[t,a,b]=el.dataset.tip.split("|");
+      tip.innerHTML=`<div class="t">${t}</div><div class="r"><b>${a}</b></div><div class="r">${b||""}</div>`;tip.style.display="block";};
+    el.onmousemove=ev=>{const w=tip.offsetWidth;let x=ev.clientX+14;if(x+w>innerWidth-10)x=ev.clientX-w-14;
+      tip.style.left=x+"px";tip.style.top=(ev.clientY+14)+"px";};
+    el.onmouseleave=()=>tip.style.display="none";
+  });
+}
+const TABLE_CAP=300;
+function renderQueue(){
+  $("#queue-empty").style.display="none";$("#queuepanel").style.display="block";
+  const counts={ALL:state.recs.length};
+  for(const r of state.recs)counts[r.verdict]=(counts[r.verdict]||0)+1;
+  const chips=["ALL","KILL","PAUSE","WATCH","SCALE","KEEP","LOW DATA"].filter(v=>counts[v]);
+  $("#chips").innerHTML=chips.map(v=>`<button class="chip${state.filter===v?" on":""}" data-f="${v}">${v} ${counts[v]||0}</button>`).join("")+`<span class="sp"></span>`;
+  $$("#chips .chip").forEach(c=>c.onclick=()=>{state.filter=c.dataset.f;state.showAll=false;renderQueue();});
+  let recs=state.recs.filter(r=>state.filter==="ALL"||r.verdict===state.filter);
+  const key=state.sortKey,dir=state.sortDir;
+  const val=r=>key==="rank"?r.rank:key==="spend"?r.e.spend:key==="kpi"?(cfg.mode==="roas"?(r.e.roas??-1):(r.e.cpa??Infinity)):key==="conv"?r.e.conv:r.e.name.toLowerCase();
+  recs=[...recs].sort((a,b)=>{const x=val(a),y=val(b);return(x<y?-1:x>y?1:0)*dir||b.e.spend-a.e.spend;});
+  const totalN=recs.length, capped=!state.showAll&&totalN>TABLE_CAP;
+  if(capped)recs=recs.slice(0,TABLE_CAP);
+  const kpiHead=cfg.mode==="roas"?"ROAS":"CPA";
+  const kpiTitle=cfg.mode==="roas"?"Return on ad spend = revenue ÷ spend":"Cost per acquisition = spend ÷ conversions";
+  $("#qtable").innerHTML=`<thead><tr>
+    <th data-k="rank">Verdict</th><th data-k="name">Entity</th>
+    <th class="num" data-k="spend">Spend</th><th class="num" data-k="kpi" title="${kpiTitle}">${kpiHead}</th>
+    <th class="num" data-k="conv">Conv</th><th class="num" title="Click-through rate = clicks ÷ impressions">CTR</th>
+    <th class="num" title="Average times one person saw this ad">Freq</th>
+    <th>Why / action</th></tr></thead><tbody>`+
+    recs.map(r=>{const e=r.e,V=VERDICTS[r.verdict];
+      const kpiCell=cfg.mode==="roas"?(e.roas!=null?e.roas.toFixed(2):"—"):(e.cpa!=null?money(e.cpa):"—");
+      return`<tr><td><span class="vchip" style="background:${V.hex}">${r.verdict}</span><div class="conf">CONF ${r.conf}</div></td>
+      <td><div class="ent">${esc(e.name)}</div>${e.camp?`<div class="cmp">${esc(e.camp)}</div>`:""}</td>
+      <td class="num">${money(e.spend)}</td><td class="num">${kpiCell}</td>
+      <td class="num">${e.conv}</td><td class="num">${e.ctr!=null?pct(e.ctr):"—"}</td>
+      <td class="num">${e.freq!=null?e.freq.toFixed(1):"—"}</td>
+      <td class="why">${r.reasons.map(esc).join(" ")}<div class="act">→ ${esc(r.action)}</div>
+        <details><summary>▸ show the math</summary><pre>${r.math.map(esc).join("\n")}</pre></details></td></tr>`;}).join("")+"</tbody>";
+  $("#capwrap").innerHTML=capped?`<div class="capnote">Showing ${TABLE_CAP} of ${totalN} — <button class="btn ghost" id="showall">show all</button></div>`:"";
+  if(capped)$("#showall").onclick=()=>{state.showAll=true;renderQueue();};
+  $$("#qtable th[data-k]").forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k;
+    if(state.sortKey===k)state.sortDir*=-1;else{state.sortKey=k;state.sortDir=1;}
+    renderQueue();});
+  renderRealloc();
+}
+function renderRealloc(){
+  const losers=state.recs.filter(r=>r.verdict==="KILL"||r.verdict==="PAUSE");
+  const winners=state.recs.filter(r=>r.verdict==="SCALE");
+  const pool=losers.reduce((s,r)=>s+r.e.spend,0);
+  if(!pool||!winners.length){$("#realloc").innerHTML=pool?`<div class="maphead" style="margin-top:8px">Reallocation</div>${money(pool)} is freed by KILL/PAUSE but nothing currently clears the scale bar — bank it or fund new tests.`:"";return;}
+  const convSum=winners.reduce((s,r)=>s+r.e.conv,0)||1;
+  $("#realloc").innerHTML=`<div class="maphead" style="margin-top:8px">Reallocation — ${money(pool)} freed from ${losers.length} loser(s)</div>`+
+    winners.map(r=>{const share=pool*r.e.conv/convSum;const capped=Math.min(share,r.e.spend*cfg.scaleStep/100);
+      return`<div class="rrow"><span>${esc(r.e.name)}</span><span><b>+${money(capped)}</b> now (cap ${cfg.scaleStep}%/round) · headroom ${money(share)}</span></div>`;}).join("");
+}
+
+/* ============ mapping UI ============ */
+const ROLES=[["name","Entity name"],["campaign","Campaign"],["spend","Spend"],["impressions","Impressions"],
+  ["clicks","Clicks"],["conversions","Conversions"],["revenue","Revenue / conv. value"],["frequency","Frequency"],["date","Date"]];
+function renderMapping(){
+  $("#mapwrap").style.display="block";
+  $("#mapgrid").innerHTML=ROLES.map(([role,label])=>`<div class="maprole"><label>${label}</label>
+    <select data-role="${role}"><option value="-1">—</option>${state.headers.map((h,i)=>
+      `<option value="${i}"${state.mapping[role]===i?" selected":""}>${esc(h)}</option>`).join("")}</select></div>`).join("");
+  $$("#mapgrid select").forEach(s=>s.onchange=()=>{state.mapping[s.dataset.role]=+s.value;runAudit();});
+}
+
+/* ============ ingest ============ */
+function ingest(text,name,delimHint){
+  const{rows,delim}=parseCSV(text);
+  state.commaDec=(delimHint||delim)===";";
+  if(rows.length<2){msg("Couldn't parse that file — is it a CSV export?","err");return;}
+  const hi=findHeaderRow(rows);
+  state.headers=rows[hi].map(h=>h.trim());
+  state.rows=rows.slice(hi+1);
+  state.mapping=guessMapping(state.headers);
+  state.sourceName=name;
+  state.showAll=false;
+  if(state.mapping.spend<0||state.mapping.name<0){
+    msg("Loaded, but couldn't auto-detect "+(state.mapping.spend<0?"a spend column":"an entity column")+" — set it below.","err");
+  }else msg(`Parsed ${state.rows.length} rows · ${state.headers.length} columns from ${name}.`,"ok");
+  renderMapping();
+  runAudit();
+}
+function msg(t,cls){const m=$("#parsemsg");m.textContent=t;m.className=cls||"";}
+
+$("#drop").onclick=()=>$("#file").click();
+$("#drop").onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("#file").click();}};
+$("#file").onchange=async e=>{const f=e.target.files[0];if(f)ingest(await readAny(f),f.name);e.target.value="";};
+["dragover","dragenter"].forEach(ev=>$("#drop").addEventListener(ev,e=>{e.preventDefault();$("#drop").classList.add("hot")}));
+["dragleave","drop"].forEach(ev=>$("#drop").addEventListener(ev,e=>{e.preventDefault();$("#drop").classList.remove("hot")}));
+$("#drop").addEventListener("drop",async e=>{const f=e.dataTransfer.files[0];if(f)ingest(await readAny(f),f.name);});
+
+/* ============ goals & rules binding ============ */
+const NUMS=["targetCPA","targetROAS","minSpend","killMult","tol","scaleThr","minConvScale","freqCap","ctrRatio","minImpr","scaleStep","trendPct"];
+function syncInputs(){
+  for(const k of NUMS)$("#cfg-"+k).value=cfg[k];
+  $("#cfg-cur").value=cfg.cur;
+  $("#mode-cpa").classList.toggle("on",cfg.mode==="cpa");
+  $("#mode-roas").classList.toggle("on",cfg.mode==="roas");
+}
+for(const k of NUMS)$("#cfg-"+k).oninput=e=>{const v=parseFloat(e.target.value);if(isFinite(v)){cfg[k]=v;saveCfg();runAudit();}};
+$("#cfg-cur").oninput=e=>{cfg.cur=e.target.value||"$";saveCfg();runAudit();};
+$("#mode-cpa").onclick=()=>{cfg.mode="cpa";saveCfg();syncInputs();runAudit();};
+$("#mode-roas").onclick=()=>{cfg.mode="roas";saveCfg();syncInputs();runAudit();};
+$("#resetcfg").onclick=()=>{const p=cfg.platforms;cfg={...DEFAULTS,platforms:p};saveCfg();syncInputs();renderPlatforms();runAudit();};
+syncInputs();
+
+/* ============ export ============ */
+$("#exportcsv").onclick=()=>{
+  if(!state.recs)return;
+  const kpiHead=cfg.mode==="roas"?"roas":"cpa";
+  const lines=[["verdict","confidence","entity","campaign","spend",kpiHead,"conversions","ctr","frequency","reason","action"].join(",")];
+  for(const r of state.recs){const e=r.e;
+    const kpi=cfg.mode==="roas"?(e.roas!=null?e.roas.toFixed(2):""):(e.cpa!=null?e.cpa.toFixed(2):"");
+    const q=s=>`"${String(s).replace(/"/g,'""')}"`;
+    lines.push([r.verdict,r.conf,q(e.name),q(e.camp),e.spend.toFixed(2),kpi,e.conv,e.ctr!=null?(e.ctr*100).toFixed(2)+"%":"",
+      e.freq!=null?e.freq.toFixed(1):"",q(r.reasons.join(" ")),q(r.action)].join(","));}
+  const blob=new Blob([lines.join("\n")],{type:"text/csv"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="pulse-audit-actions.csv";a.click();URL.revokeObjectURL(a.href);
+};
+$("#copysum").onclick=()=>{
+  if(!state.recs)return;
+  const a=state.acct,waste=state.recs.reduce((s,r)=>s+wasted(r),0);
+  const g=v=>state.recs.filter(r=>r.verdict===v);
+  let t=`AD ACCOUNT AUDIT — ${state.sourceName}\nSpend ${money(a.spend)} · ${a.conv} conv · `+
+    (cfg.mode==="roas"?`blended ROAS ${a.roas!=null?a.roas.toFixed(2):"—"} (target ${cfg.targetROAS})`:`blended CPA ${a.cpa!=null?money(a.cpa):"—"} (target ${money(cfg.targetCPA)})`)+
+    `\nWasted spend identified: ${money(waste)}\n`;
+  for(const v of["KILL","PAUSE","WATCH","SCALE"]){const rs=g(v);if(!rs.length)continue;
+    t+=`\n${v} (${rs.length}):\n`+rs.map(r=>`  • ${r.e.name} — ${r.reasons[0]} ${r.action}`).join("\n")+"\n";}
+  navigator.clipboard.writeText(t).then(()=>{$("#copymsg").textContent="copied ✓";setTimeout(()=>$("#copymsg").textContent="",2500);},
+    ()=>{$("#copymsg").textContent="couldn't copy — clipboard blocked";setTimeout(()=>$("#copymsg").textContent="",2500);});
+};
+
+/* ============ sample accounts ============ */
+const SAMPLE_META=`Ad name,Campaign name,Day,Amount spent (USD),Impressions,Link clicks,Frequency,Results,Purchases conversion value
+UGC-Hook-A,Prospecting — Broad,2026-08-01,420.00,52000,1300,1.8,14,1690.00
+UGC-Hook-A,Prospecting — Broad,2026-08-08,460.00,56000,1450,1.9,16,1980.00
+Static-Promo-B,Prospecting — Broad,2026-08-01,95.00,14000,210,2.2,0,0
+Static-Promo-B,Prospecting — Broad,2026-08-08,88.00,13000,175,2.4,0,0
+Video-Test-C,Prospecting — Broad,2026-08-01,240.00,30000,640,2.1,3,210.00
+Video-Test-C,Prospecting — Broad,2026-08-08,265.00,31000,600,2.3,3,195.00
+Carousel-D,Prospecting — Interests,2026-08-01,380.00,40000,1150,3.2,11,1300.00
+Carousel-D,Prospecting — Interests,2026-08-08,395.00,41000,980,4.1,10,1150.00
+Story-E,Prospecting — Interests,2026-08-01,145.00,15000,340,2.0,3,420.00
+Story-E,Prospecting — Interests,2026-08-08,155.00,16000,330,2.1,4,560.00
+Reels-F,Prospecting — Interests,2026-08-01,10.00,3000,60,1.2,0,0
+Reels-F,Prospecting — Interests,2026-08-08,12.00,3500,70,1.3,0,0
+Broad-G,Prospecting — Broad,2026-08-01,105.00,30000,120,1.9,3,360.00
+Broad-G,Prospecting — Broad,2026-08-08,105.00,30000,120,2.0,2,250.00
+Lookalike-H,Prospecting — LAL 1%,2026-08-01,170.00,33000,760,2.2,4,1080.00
+Lookalike-H,Prospecting — LAL 1%,2026-08-08,180.00,35000,800,2.3,5,1230.00
+Retarget-I,Retargeting — 30d,2026-08-01,135.00,9000,260,5.5,5,1120.00
+Retarget-I,Retargeting — 30d,2026-08-08,145.00,9500,265,6.1,4,980.00
+Interest-J,Prospecting — Interests,2026-08-01,34.00,11000,200,1.6,0,0
+Interest-J,Prospecting — Interests,2026-08-08,31.00,9000,160,1.7,0,0
+AdvPlus-K,Advantage+ Shopping,2026-08-01,150.00,16000,340,2.0,5,760.00
+AdvPlus-K,Advantage+ Shopping,2026-08-08,225.00,20000,420,2.1,3,410.00
+DCT-L,Prospecting — Broad,2026-08-01,60.00,12000,230,1.8,1,130.00
+DCT-L,Prospecting — Broad,2026-08-08,70.00,11000,215,1.9,1,120.00`;
+const SAMPLE_GOOGLE=`Search keyword report
+2026-07-14 - 2026-08-11
+Search keyword,Campaign,Cost,Impr.,Clicks,Conversions,Conv. value
+"buy running shoes",Search — Shoes,412.50,15200,890,11,1650.00
+"running shoes for flat feet",Search — Shoes,188.20,6100,340,6,930.00
+"what are trail running shoes",Search — Shoes,96.40,8800,410,0,0
+"nike pegasus 41",Search — Brand,145.80,4900,380,7,1120.00
+"cheap sneakers free shipping",Search — Shoes,84.30,7200,265,1,45.00
+"marathon training plan",Search — Content,132.60,9900,520,0,0
+"running store near me",Search — Local,66.90,2100,180,4,510.00
+"best running shoes 2026",Search — Shoes,238.40,11400,610,5,780.00
+"womens running shoes sale",Search — Shoes,171.10,6800,395,6,1010.00
+"how to lace running shoes",Search — Content,38.70,4100,170,0,0
+Total: Search,,"1,574.90","76,500","4,160",40,"6,045.00"`;
+$("#loadsample").onclick=()=>ingest(SAMPLE_META,"sample Meta account");
+$("#loadsample2").onclick=()=>ingest(SAMPLE_GOOGLE,"sample Google keywords");
+</script>

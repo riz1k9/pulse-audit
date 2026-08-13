@@ -1,0 +1,25 @@
+Ad name,Campaign name,Day,Amount spent (USD),Impressions,Link clicks,Frequency,Results,Purchases conversion value
+UGC-Hook-A,Prospecting — Broad,2026-08-01,420.00,52000,1300,1.8,14,1690.00
+UGC-Hook-A,Prospecting — Broad,2026-08-08,460.00,56000,1450,1.9,16,1980.00
+Static-Promo-B,Prospecting — Broad,2026-08-01,95.00,14000,210,2.2,0,0
+Static-Promo-B,Prospecting — Broad,2026-08-08,88.00,13000,175,2.4,0,0
+Video-Test-C,Prospecting — Broad,2026-08-01,240.00,30000,640,2.1,3,210.00
+Video-Test-C,Prospecting — Broad,2026-08-08,265.00,31000,600,2.3,3,195.00
+Carousel-D,Prospecting — Interests,2026-08-01,380.00,40000,1150,3.2,11,1300.00
+Carousel-D,Prospecting — Interests,2026-08-08,395.00,41000,980,4.1,10,1150.00
+Story-E,Prospecting — Interests,2026-08-01,145.00,15000,340,2.0,3,420.00
+Story-E,Prospecting — Interests,2026-08-08,155.00,16000,330,2.1,4,560.00
+Reels-F,Prospecting — Interests,2026-08-01,10.00,3000,60,1.2,0,0
+Reels-F,Prospecting — Interests,2026-08-08,12.00,3500,70,1.3,0,0
+Broad-G,Prospecting — Broad,2026-08-01,105.00,30000,120,1.9,3,360.00
+Broad-G,Prospecting — Broad,2026-08-08,105.00,30000,120,2.0,2,250.00
+Lookalike-H,Prospecting — LAL 1%,2026-08-01,170.00,33000,760,2.2,4,1080.00
+Lookalike-H,Prospecting — LAL 1%,2026-08-08,180.00,35000,800,2.3,5,1230.00
+Retarget-I,Retargeting — 30d,2026-08-01,135.00,9000,260,5.5,5,1120.00
+Retarget-I,Retargeting — 30d,2026-08-08,145.00,9500,265,6.1,4,980.00
+Interest-J,Prospecting — Interests,2026-08-01,34.00,11000,200,1.6,0,0
+Interest-J,Prospecting — Interests,2026-08-08,31.00,9000,160,1.7,0,0
+AdvPlus-K,Advantage+ Shopping,2026-08-01,150.00,16000,340,2.0,5,760.00
+AdvPlus-K,Advantage+ Shopping,2026-08-08,225.00,20000,420,2.1,3,410.00
+DCT-L,Prospecting — Broad,2026-08-01,60.00,12000,230,1.8,1,130.00
+DCT-L,Prospecting — Broad,2026-08-08,70.00,11000,215,1.9,1,120.00
